@@ -31,7 +31,31 @@
   .accent{color:#ffe45f}
   p{color:#d0dbcf;line-height:1.55;font-size:14px}
   #start{margin-top:10px;border:0;border-radius:14px;padding:15px 22px;background:linear-gradient(135deg,#ffed8a,#d9b52e);color:#172017;font-weight:950;font-size:15px;width:100%;box-shadow:0 8px 26px #e5c63d30;letter-spacing:.08em}
-  .small{font-size:11px;color:#9fb0a0;margin-top:14px}
+  .small{font-size:12px;color:#9fb0a0;margin-top:14px}
+  /* Mobile-first readability pass */
+  @media(max-width:600px){
+    .top{gap:8px;padding-left:12px;padding-right:12px}
+    .pill{font-size:14px;padding:10px 11px;line-height:1.35;border-radius:13px}
+    .pill span{font-size:12px!important}
+    #score{font-size:23px}
+    #energy{font-size:18px}
+    #tip{top:86px;width:calc(100vw - 24px);max-width:440px;white-space:normal;text-align:center;font-size:13px;line-height:1.5;padding:10px 13px;border-radius:15px}
+    #bottom{gap:10px;bottom:calc(16px + env(safe-area-inset-bottom));padding:0 12px}
+    .ctrl{flex:1;max-width:78px;height:62px;font-size:25px;border-radius:18px}
+    .panel{padding:28px 22px;max-width:390px}
+    h1{font-size:clamp(34px,9vw,44px)}
+    p{font-size:16px;line-height:1.65}
+    #start{font-size:17px;min-height:54px}
+    .small{font-size:12px;line-height:1.5}
+  }
+  @media(max-width:380px){
+    .pill{font-size:12px;padding:9px}
+    .pill span{font-size:11px!important}
+    #tip{font-size:12px;top:82px}
+    #bottom{gap:7px}
+    .ctrl{height:58px;font-size:23px}
+    .panel{padding:24px 18px}
+  }
   @media(min-width:800px){#tip{top:88px}.ctrl{width:72px}}
 </style>
 </head>
@@ -53,7 +77,7 @@
 <div id="overlay">
   <div class="panel">
     <h1>FUTURE<br><span class="accent">TIGER</span></h1>
-    <p>Beyond Nature: Imaginasi Hidupan Masa Hadapan<br><b>Prototype 0.1</b></p>
+    <p>Beyond Nature: Imaginasi Hidupan Masa Hadapan<br><b>Prototype 0.2</b></p>
     <p>Teroka hutan masa hadapan. Elak halangan, kumpul <span class="accent">Tenaga Evolusi</span> dan buktikan naluri Harimau Futuristik.</p>
     <button id="start">MULA BERLARI</button>
     <div class="small">BEYOND NATURE &nbsp; / &nbsp; PROTOTYPE 0.2</div>
@@ -133,7 +157,7 @@ function makeItem(type,lane,z){let g=new THREE.Group();g.position.set(lane*2.15,
 let running=false,ended=false, lane=0, jump=0,slide=0, score=0,energy=0, speed=15,spawn=0,orbSpawn=0;
 const overlay=document.querySelector('#overlay'),scoreEl=document.querySelector('#score'),energyEl=document.querySelector('#energy');
 function start(){items.forEach(i=>scene.remove(i.g));items.length=0;lane=0;jump=slide=score=energy=0;speed=15;spawn=.7;orbSpawn=.4;ended=false;running=true;tiger.position.x=0;overlay.style.display='none';scoreEl.textContent='0';energyEl.textContent='0'}
-function end(){running=false;ended=true;overlay.innerHTML=`<div class="panel"><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor: <b>${Math.floor(score)}</b><br>Tenaga Evolusi: <b>${energy}</b></p><button id="start">CUBA LAGI</button><div class="small">Prototype 0.1 · Future Tiger Runner</div></div>`;overlay.style.display='flex';document.querySelector('#start').addEventListener('click',start)}
+function end(){running=false;ended=true;overlay.innerHTML=`<div class="panel"><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor: <b>${Math.floor(score)}</b><br>Tenaga Evolusi: <b>${energy}</b></p><button id="start">CUBA LAGI</button><div class="small">Prototype 0.2 · Future Tiger Runner</div></div>`;overlay.style.display='flex';document.querySelector('#start').addEventListener('click',start)}
 function move(d){if(!running)return;lane=Math.max(-1,Math.min(1,lane+d))}
 function doJump(){if(running&&jump<=0&&slide<=0)jump=.78}
 function doSlide(){if(running&&jump<=0)slide=.7}
