@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Future Tiger Runner — Prototype 0.2 Visual Upgrade</title>
+<title>Future Tiger Runner</title>
 <style>
   :root{color-scheme:dark}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -77,10 +77,10 @@
 <div id="overlay">
   <div class="panel">
     <h1>FUTURE<br><span class="accent">TIGER</span></h1>
-    <p>Beyond Nature: Imaginasi Hidupan Masa Hadapan<br><b>Prototype 0.2</b></p>
+    <p>Beyond Nature: Imaginasi Hidupan Masa Hadapan<br></p>
     <p>Teroka hutan masa hadapan. Elak halangan, kumpul <span class="accent">Tenaga Evolusi</span> dan buktikan naluri Harimau Futuristik.</p>
     <button id="start">MULA BERLARI</button>
-    <div class="small">BEYOND NATURE &nbsp; / &nbsp; PROTOTYPE 0.2</div>
+    <div class="small">BEYOND NATURE</div>
   </div>
 </div>
 <script type="module">
@@ -157,7 +157,7 @@ function makeItem(type,lane,z){let g=new THREE.Group();g.position.set(lane*2.15,
 let running=false,ended=false, lane=0, jump=0,slide=0, score=0,energy=0, speed=15,spawn=0,orbSpawn=0;
 const overlay=document.querySelector('#overlay'),scoreEl=document.querySelector('#score'),energyEl=document.querySelector('#energy');
 function start(){items.forEach(i=>scene.remove(i.g));items.length=0;lane=0;jump=slide=score=energy=0;speed=15;spawn=.7;orbSpawn=.4;ended=false;running=true;tiger.position.x=0;overlay.style.display='none';scoreEl.textContent='0';energyEl.textContent='0'}
-function end(){running=false;ended=true;overlay.innerHTML=`<div class="panel"><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor: <b>${Math.floor(score)}</b><br>Tenaga Evolusi: <b>${energy}</b></p><button id="start">CUBA LAGI</button><div class="small">Prototype 0.2 · Future Tiger Runner</div></div>`;overlay.style.display='flex';document.querySelector('#start').addEventListener('click',start)}
+function end(){running=false;ended=true;overlay.innerHTML=`<div class="panel"><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor: <b>${Math.floor(score)}</b><br>Tenaga Evolusi: <b>${energy}</b></p><button id="start">CUBA LAGI</button><div class="small">Future Tiger Runner</div></div>`;overlay.style.display='flex';document.querySelector('#start').addEventListener('click',start)}
 function move(d){if(!running)return;lane=Math.max(-1,Math.min(1,lane+d))}
 function doJump(){if(running&&jump<=0&&slide<=0)jump=.78}
 function doSlide(){if(running&&jump<=0)slide=.7}
