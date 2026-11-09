@@ -18,15 +18,15 @@
     --text-muted:#9ec2b5;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg-deep);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  #game{position:fixed;inset:0}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg-deep);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:none}
+  #game{position:fixed;inset:0;touch-action:none}
   #game:after{
     content:"";position:absolute;inset:0;pointer-events:none;
     background:
       linear-gradient(180deg,rgba(8,24,20,0.42) 0%,transparent 22%,transparent 74%,rgba(6,18,15,0.62) 100%),
       radial-gradient(ellipse at 50% 50%,transparent 48%,rgba(4,14,12,0.38) 100%);
   }
-  canvas{display:block;width:100%;height:100%}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
   #hud{position:absolute;inset:0;pointer-events:none;color:var(--text-main)}
   .top{
     display:flex;justify-content:space-between;align-items:stretch;gap:10px;
@@ -113,15 +113,6 @@
     0%{background-position:0% 50%}
     100%{background-position:200% 50%}
   }
-  #tip{
-    position:absolute;top:calc(116px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
-    white-space:nowrap;background:rgba(9,25,21,0.62);
-    border:1px solid rgba(104,238,214,0.22);border-radius:999px;
-    padding:6px 14px;font-size:10px;color:#d8efe8;letter-spacing:.06em;
-    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-    box-shadow:0 6px 20px rgba(0,0,0,0.22);
-    display:flex;align-items:center;gap:7px;
-  }
   .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan-glow);box-shadow:0 0 8px var(--cyan-glow)}
   #bottom{
     position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));
@@ -134,7 +125,7 @@
     color:#ebfffb;font-size:20px;font-weight:800;
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     box-shadow:0 8px 22px rgba(0,0,0,0.42),inset 0 1px rgba(255,255,255,0.16);
-    touch-action:manipulation;cursor:pointer;transition:transform .1s,border-color .15s;
+    touch-action:manipulation;cursor:pointer;transition:transform .08s,border-color .12s;
   }
   .ctrl:active{transform:scale(.94);background:rgba(32,74,62,0.92);border-color:var(--cyan-glow)}
   #overlay{
@@ -190,7 +181,7 @@
     font-size:9.5px;font-weight:800;letter-spacing:.18em;color:var(--text-muted);
     margin-top:6px;text-transform:uppercase;
   }
-  @media(min-width:800px){#tip{top:124px}.ctrl{width:72px;height:58px}}
+  @media(min-width:800px){.ctrl{width:72px;height:58px}}
 </style>
 </head>
 <body>
@@ -219,14 +210,13 @@
     <div class="evo-pill" id="evoPill">
       <div class="evo-header">
         <span id="evoStatus">ENERGI EVOLUSI</span>
-        <span id="evoCount">0 / 1000</span>
+        <span id="evoCount">0 / 250</span>
       </div>
       <div class="evo-track">
         <div id="evoFill"></div>
       </div>
     </div>
   </div>
-  <div id="tip"><span class="dot"></span> GESER KIRI / KANAN &nbsp;·&nbsp; ATAS: LOMPAT ROKET &nbsp;·&nbsp; BAWAH: GULING</div>
   <div id="countdownBadge" aria-live="polite">
     <div id="countdownNum">3</div>
     <div id="countdownSub">SEDIA BERLARI</div>
@@ -243,7 +233,7 @@
     <div class="eyebrow"><span class="dot"></span> BEYOND NATURE</div>
     <h1>FUTURE<br><span class="accent">TIGER</span></h1>
     <p><b class="cyan-text">Imaginasi Hidupan Masa Hadapan</b></p>
-    <p>Teroka ekosistem hutan masa hadapan. Ikuti laluan tenaga, elak halangan, dan kumpul <span class="accent">1000 Energi Evolusi</span> untuk mengaktifkan Mod Evolusi Kebal.</p>
+    <p>Teroka ekosistem hutan masa hadapan. Elak halangan, kumpul <span class="accent">Tenaga Evolusi</span> dan buktikan naluri Harimau Futuristik.</p>
     <button id="start">MULA BERLARI</button>
     <div class="small">ARCA SENI HALUS &nbsp;·&nbsp; HUTAN BIO-FUTURISTIK</div>
   </div>
@@ -260,7 +250,7 @@ const camera = new THREE.PerspectiveCamera(57, innerWidth / innerHeight, 0.1, 19
 camera.position.set(0, 5.0, 10.8);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -555,6 +545,9 @@ const rocketCyanMat = new THREE.MeshBasicMaterial({ color: 0x5ef2d6, transparent
 const evoAuraOuterMat = new THREE.MeshBasicMaterial({ color: 0x00f5d4, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false });
 const evoAuraInnerMat = new THREE.MeshBasicMaterial({ color: 0x9b5de5, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false });
 
+// Shared Reusable Pickup Burst Geometry
+const sharedBurstRingGeo = new THREE.RingGeometry(0.16, 0.30, 20);
+
 // ============================================================================
 // LAYERED FUTURISTIC ENCHANTED FOREST ENVIRONMENT & INTEGRATED ROAD
 // ============================================================================
@@ -682,31 +675,31 @@ const tigerInner = new THREE.Group();
 tigerInner.position.set(0, -0.72, 0);
 tigerRollPivot.add(tigerInner);
 
-function box(parent, w, h, d, material, x, y, z, rx = 0, ry = 0, rz = 0) {
+function box(parent, w, h, d, material, x, y, z, rx = 0, ry = 0, rz = 0, cast = true) {
   const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
   o.position.set(x, y, z);
   o.rotation.set(rx, ry, rz);
-  o.castShadow = true;
-  o.receiveShadow = true;
+  o.castShadow = cast;
+  o.receiveShadow = cast;
   parent.add(o);
   return o;
 }
-function sphere(parent, sx, sy, sz, material, x, y, z, rx = 0, ry = 0, rz = 0) {
+function sphere(parent, sx, sy, sz, material, x, y, z, rx = 0, ry = 0, rz = 0, cast = true) {
   const o = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), material);
   o.scale.set(sx, sy, sz);
   o.position.set(x, y, z);
   o.rotation.set(rx, ry, rz);
-  o.castShadow = true;
-  o.receiveShadow = true;
+  o.castShadow = cast;
+  o.receiveShadow = cast;
   parent.add(o);
   return o;
 }
-function cyl(parent, rt, rb, h, material, x, y, z, rx = 0, ry = 0, rz = 0, seg = 16) {
+function cyl(parent, rt, rb, h, material, x, y, z, rx = 0, ry = 0, rz = 0, seg = 16, cast = true) {
   const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), material);
   o.position.set(x, y, z);
   o.rotation.set(rx, ry, rz);
-  o.castShadow = true;
-  o.receiveShadow = true;
+  o.castShadow = cast;
+  o.receiveShadow = cast;
   parent.add(o);
   return o;
 }
@@ -809,26 +802,26 @@ sphere(head, 0.27, 0.19, 0.26, ivory, 0, -0.07, -0.35);
 for (let s of [-1, 1]) {
   sphere(head, 0.175, 0.145, 0.185, ivory, s * 0.135, -0.13, -0.44);
   for (let d = 0; d < 3; d++) {
-    sphere(head, 0.016, 0.016, 0.016, black, s * (0.10 + d * 0.042), -0.12 - (d % 2) * 0.028, -0.59);
+    sphere(head, 0.016, 0.016, 0.016, black, s * (0.10 + d * 0.042), -0.12 - (d % 2) * 0.028, -0.59, 0, 0, 0, false);
   }
 }
 sphere(head, 0.19, 0.105, 0.19, ivory, 0, -0.24, -0.35);
 
 sphere(head, 0.105, 0.072, 0.075, black, 0, -0.04, -0.58);
-box(head, 0.024, 0.105, 0.028, black, 0, -0.13, -0.575);
+box(head, 0.024, 0.105, 0.028, black, 0, -0.13, -0.575, 0, 0, 0, false);
 for (let s of [-1, 1]) {
-  box(head, 0.088, 0.022, 0.028, black, s * 0.042, -0.19, -0.565, 0, 0, s * -0.34);
+  box(head, 0.088, 0.022, 0.028, black, s * 0.042, -0.19, -0.565, 0, 0, s * -0.34, false);
 }
 
 for (let s of [-1, 1]) {
-  sphere(head, 0.108, 0.074, 0.058, black, s * 0.21, 0.08, -0.38, 0, s * 0.18, s * -0.14);
-  sphere(head, 0.088, 0.060, 0.056, goldMat, s * 0.21, 0.08, -0.395, 0, s * 0.18, s * -0.14);
-  sphere(head, 0.076, 0.052, 0.055, eyeIrisMat, s * 0.21, 0.08, -0.405, 0, s * 0.18, s * -0.14);
-  box(head, 0.022, 0.056, 0.028, black, s * 0.21, 0.08, -0.445);
-  box(head, 0.17, 0.042, 0.11, black, s * 0.20, 0.17, -0.35, 0, s * 0.14, s * 0.22);
+  sphere(head, 0.108, 0.074, 0.058, black, s * 0.21, 0.08, -0.38, 0, s * 0.18, s * -0.14, false);
+  sphere(head, 0.088, 0.060, 0.056, goldMat, s * 0.21, 0.08, -0.395, 0, s * 0.18, s * -0.14, false);
+  sphere(head, 0.076, 0.052, 0.055, eyeIrisMat, s * 0.21, 0.08, -0.405, 0, s * 0.18, s * -0.14, false);
+  box(head, 0.022, 0.056, 0.028, black, s * 0.21, 0.08, -0.445, 0, 0, 0, false);
+  box(head, 0.17, 0.042, 0.11, black, s * 0.20, 0.17, -0.35, 0, s * 0.14, s * 0.22, false);
 }
 
-cyl(head, 0.055, 0.075, 0.038, goldMat, 0, 0.38, -0.17, 0.35, 0, 0, 10);
+cyl(head, 0.055, 0.075, 0.038, goldMat, 0, 0.38, -0.17, 0.35, 0, 0, 10, false);
 
 for (let s of [-1, 1]) {
   const ear = new THREE.Group();
@@ -878,19 +871,19 @@ for (const [lx, lz, isFront] of legCoords) {
   for (let k = 0; k < 3; k++) {
     const sy = -0.11 - k * 0.125;
     const sr = 0.198 - k * 0.007;
-    cyl(leg, sr, sr, 0.044, black, 0, sy, legZ, legTilt, 0, 0.07 * (k % 2 ? 1 : -1), 16);
+    cyl(leg, sr, sr, 0.044, black, 0, sy, legZ, legTilt, 0, 0.07 * (k % 2 ? 1 : -1), 16, false);
   }
 
   const pawZ = isFront ? -0.075 : -0.025;
   sphere(leg, 0.205, 0.12, 0.235, ivory, 0, -0.49, pawZ);
 
   for (let t = -1.5; t <= 1.5; t += 1) {
-    box(leg, 0.025, 0.105, 0.055, black, t * 0.082, -0.49, pawZ - 0.185, -0.14, 0, 0);
+    box(leg, 0.025, 0.105, 0.055, black, t * 0.082, -0.49, pawZ - 0.185, -0.14, 0, 0, false);
   }
 
-  cyl(leg, 0.088, 0.088, 0.02, black, 0, -0.58, pawZ + 0.02, 0, 0, 0, 12);
+  cyl(leg, 0.088, 0.088, 0.02, black, 0, -0.58, pawZ + 0.02, 0, 0, 0, 12, false);
   for (let t = -1.5; t <= 1.5; t += 1) {
-    cyl(leg, 0.036, 0.036, 0.02, black, t * 0.082, -0.58, pawZ - 0.105 + Math.abs(t) * 0.024, 0, 0, 0, 10);
+    cyl(leg, 0.036, 0.036, 0.02, black, t * 0.082, -0.58, pawZ - 0.105 + Math.abs(t) * 0.024, 0, 0, 0, 10, false);
   }
 
   const plume = new THREE.Group();
@@ -1008,7 +1001,7 @@ for (let i = 0; i < 6; i++) {
 }
 
 // ============================================================================
-// MULTI-SPECIES FUTURISTIC ENCHANTED FOREST FLORA (FOREGROUND & MIDDLE GROUND)
+// MULTI-SPECIES FUTURISTIC ENCHANTED FOREST FLORA (MOBILE SHADOW OPTIMIZED)
 // ============================================================================
 const trees = [];
 function makeTree(x, z, scale = 1, variant = 0) {
@@ -1018,13 +1011,14 @@ function makeTree(x, z, scale = 1, variant = 0) {
   scene.add(g);
 
   const bMat = variant % 2 === 0 ? barkWarm : barkDark;
+  const nearRoad = Math.abs(x) < 8.5;
 
   if (variant === 0) {
-    cyl(g, 0.18, 0.32, 2.8, bMat, 0, 1.4, 0, 0.03, 0, -0.02, 9);
-    box(g, 0.035, 1.6, 0.04, tealGlowSoft, 0.19, 1.2, 0, 0, 0, -0.02);
+    cyl(g, 0.18, 0.32, 2.8, bMat, 0, 1.4, 0, 0.03, 0, -0.02, 9, nearRoad);
+    box(g, 0.035, 1.6, 0.04, tealGlowSoft, 0.19, 1.2, 0, 0, 0, -0.02, false);
 
-    cyl(g, 0.08, 0.15, 1.3, bMat, -0.38, 2.75, 0.1, 0.12, 0, 0.52, 7);
-    cyl(g, 0.08, 0.14, 1.2, bMat, 0.42, 2.65, -0.1, -0.1, 0, -0.48, 7);
+    cyl(g, 0.08, 0.15, 1.3, bMat, -0.38, 2.75, 0.1, 0.12, 0, 0.52, 7, false);
+    cyl(g, 0.08, 0.14, 1.2, bMat, 0.42, 2.65, -0.1, -0.1, 0, -0.48, 7, false);
 
     const crowns = [
       [0, 3.35, 0, 1.35, 0.58, 1.25, foliageLush],
@@ -1032,16 +1026,16 @@ function makeTree(x, z, scale = 1, variant = 0) {
       [0.68, 2.98, -0.15, 0.92, 0.46, 0.88, foliageDeep],
       [0.1, 3.72, -0.1, 0.98, 0.45, 0.92, foliageBright]
     ];
-    crowns.forEach(([cx, cy, cz, sx, sy, sz, cm]) => {
+    crowns.forEach(([cx, cy, cz, sx, sy, sz, cm], idx) => {
       const cMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), cm);
       cMesh.scale.set(sx, sy, sz);
       cMesh.position.set(cx, cy, cz);
-      cMesh.castShadow = true;
-      cMesh.receiveShadow = true;
+      cMesh.castShadow = nearRoad && idx === 0;
+      cMesh.receiveShadow = false;
       g.add(cMesh);
     });
   } else if (variant === 1) {
-    cyl(g, 0.12, 0.26, 3.4, bMat, 0, 1.7, 0, 0, 0, 0, 8);
+    cyl(g, 0.12, 0.26, 3.4, bMat, 0, 1.7, 0, 0, 0, 0, 8, nearRoad);
     const tiers = [
       [1.85, 1.35, 1.15, foliageDeep],
       [2.55, 1.08, 1.05, foliageLush],
@@ -1052,25 +1046,25 @@ function makeTree(x, z, scale = 1, variant = 0) {
       const cone = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 9), cm);
       cone.position.set(0, ty, 0);
       cone.rotation.y = idx * 0.4;
-      cone.castShadow = true;
+      cone.castShadow = nearRoad && idx < 2;
       g.add(cone);
     });
   } else {
-    cyl(g, 0.16, 0.28, 2.5, bMat, -0.12, 1.25, 0, 0, 0, -0.12, 8);
-    cyl(g, 0.12, 0.20, 2.2, bMat, 0.22, 1.1, 0.12, 0.08, 0, 0.18, 7);
+    cyl(g, 0.16, 0.28, 2.5, bMat, -0.12, 1.25, 0, 0, 0, -0.12, 8, nearRoad);
+    cyl(g, 0.12, 0.20, 2.2, bMat, 0.22, 1.1, 0.12, 0.08, 0, 0.18, 7, false);
     const c1 = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), foliageLush);
     c1.scale.set(1.25, 0.55, 1.15);
     c1.position.set(0, 2.65, 0);
-    c1.castShadow = true;
+    c1.castShadow = nearRoad;
     g.add(c1);
     const c2 = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), foliageBright);
     c2.scale.set(0.88, 0.45, 0.85);
     c2.position.set(0.45, 2.35, 0.2);
-    c2.castShadow = true;
+    c2.castShadow = false;
     g.add(c2);
 
-    const ruin = box(g, 0.42, 1.15, 0.36, ruinStoneMat, 0.65, 0.55, 0.25, 0, 0.2, 0.08);
-    box(ruin, 0.06, 0.65, 0.38, tealGlowSoft, 0, 0.05, 0);
+    const ruin = box(g, 0.42, 1.15, 0.36, ruinStoneMat, 0.65, 0.55, 0.25, 0, 0.2, 0.08, false);
+    box(ruin, 0.06, 0.65, 0.38, tealGlowSoft, 0, 0.05, 0, 0, 0, 0, false);
   }
 
   const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.32, 0), stoneMat);
@@ -1079,7 +1073,7 @@ function makeTree(x, z, scale = 1, variant = 0) {
   g.add(rock);
 
   for (let m = 0; m < 2; m++) {
-    const stem = cyl(g, 0.025, 0.035, 0.22, ivory, -0.32 - m * 0.18, 0.11, 0.28 + m * 0.12, 0, 0, 0, 6);
+    const stem = cyl(g, 0.025, 0.035, 0.22, ivory, -0.32 - m * 0.18, 0.11, 0.28 + m * 0.12, 0, 0, 0, 6, false);
     const cap = new THREE.Mesh(
       new THREE.ConeGeometry(0.14 - m * 0.03, 0.12, 8),
       m === 0 ? cyanGlow : blossomMat
@@ -1108,7 +1102,7 @@ const pickupEffects = [];
 
 function spawnPickupBurst(x, y, z, colorHex = 0x68f7de, maxScale = 2.2) {
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(0.16, 0.30, 20),
+    sharedBurstRingGeo,
     new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.92, side: THREE.DoubleSide })
   );
   ring.position.set(x, y, z);
@@ -1125,7 +1119,7 @@ function makeItem(type, lane, z, customY = null) {
   if (type === 'orb') {
     const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 1), goldGlow);
     core.position.y = 0.35;
-    core.castShadow = true;
+    core.castShadow = false;
     g.add(core);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.032, 8, 22), cyanGlow);
     ring.rotation.x = Math.PI / 2.6;
@@ -1135,9 +1129,9 @@ function makeItem(type, lane, z, customY = null) {
     const log = cyl(g, 0.29, 0.31, 1.42, barkWarm, 0, 0.36, 0, 0, 0, Math.PI / 2, 12);
     log.scale.set(1, 1, 0.92);
     box(g, 1.26, 0.10, 0.42, foliageLush, 0, 0.64, 0);
-    box(g, 1.18, 0.07, 0.16, goldGlow, 0, 0.71, 0);
+    box(g, 1.18, 0.07, 0.16, goldGlow, 0, 0.71, 0, 0, 0, 0, false);
     for (let s of [-1, 1]) {
-      cyl(g, 0.24, 0.24, 0.04, woodMat, s * 0.70, 0.36, 0, 0, 0, Math.PI / 2, 10);
+      cyl(g, 0.24, 0.24, 0.04, woodMat, s * 0.70, 0.36, 0, 0, 0, Math.PI / 2, 10, false);
       const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), stoneMat);
       rock.position.set(s * 0.64, 0.16, 0.12);
       g.add(rock);
@@ -1145,19 +1139,19 @@ function makeItem(type, lane, z, customY = null) {
   } else if (type === 'high') {
     for (let s of [-1, 1]) {
       box(g, 0.22, 1.62, 0.54, ruinStoneMat, s * 0.61, 0.81, 0);
-      box(g, 0.26, 0.28, 0.60, mossBorderMat, s * 0.61, 0.14, 0);
+      box(g, 0.26, 0.28, 0.60, mossBorderMat, s * 0.61, 0.14, 0, 0, 0, 0, false);
     }
     box(g, 1.44, 0.62, 0.60, stoneMat, 0, 1.30, 0);
-    box(g, 1.48, 0.14, 0.64, foliageLush, 0, 1.64, 0);
-    box(g, 1.36, 0.07, 0.58, cyanGlow, 0, 0.96, 0);
+    box(g, 1.48, 0.14, 0.64, foliageLush, 0, 1.64, 0, 0, 0, 0, false);
+    box(g, 1.36, 0.07, 0.58, cyanGlow, 0, 0.96, 0, 0, 0, 0, false);
   } else {
     for (let s of [-1, 1]) {
       cyl(g, 0.09, 0.12, 1.32, barkDark, s * 0.64, 0.66, 0, 0, 0, 0, 8);
-      box(g, 0.16, 0.16, 0.22, goldMat, s * 0.64, 1.12, 0);
+      box(g, 0.16, 0.16, 0.22, goldMat, s * 0.64, 1.12, 0, 0, 0, 0, false);
     }
     box(g, 1.44, 0.22, 0.54, ivory, 0, 1.12, 0);
-    box(g, 1.48, 0.075, 0.58, goldGlow, 0, 0.98, 0);
-    box(g, 1.36, 0.05, 0.56, cyanGlow, 0, 1.25, 0);
+    box(g, 1.48, 0.075, 0.58, goldGlow, 0, 0.98, 0, 0, 0, 0, false);
+    box(g, 1.36, 0.05, 0.56, cyanGlow, 0, 1.25, 0, 0, 0, 0, false);
   }
 
   items.push({ g, type, lane, z, baseY, hit: false });
@@ -1284,16 +1278,20 @@ function seedInitialEnergyRoutes() {
 }
 
 // ============================================================================
-// ENERGY SYSTEM CORRECTION:
-// - ENERGY_GAIN = 1 (+1 per collected energy particle)
-// - EVO_THRESHOLD = 1000 (1000 individual particles required)
-// - EVO_DURATION = 10.0 seconds with complete obstacle immunity
-// - Removed nextCycleEnergy: energy collection continues during Evolution Mode
-//   without triggering another Evolution, and resets to 0 once when Evolution ends
+// TWO INDEPENDENT ENERGY SYSTEMS:
+// 1. SYSTEM A — TOTAL ENERGY (`totalEnergy`):
+//    - Permanent accumulated Energy (+1 per collected particle)
+//    - Persisted in background storage (`localStorage` key `futureTiger_totalEnergy`)
+//      with safe in-memory fallback if storage is restricted
+//    - Never reset when Evolution Mode ends, when retrying, or when starting a new run
+// 2. SYSTEM B — EVOLUTION PROGRESS (`evoProgress`):
+//    - Separate temporary counter (+1 per collected particle)
+//    - Threshold: 250 (`EVO_THRESHOLD = 250`)
+//    - Resets to 0 when Evolution Mode ends or when starting a new run
 // ============================================================================
 const JUMP_DURATION = 0.76, JUMP_HEIGHT = 1.52, SLIDE_DURATION = 0.72;
 const ENERGY_GAIN = 1;
-const EVO_THRESHOLD = 1000;
+const EVO_THRESHOLD = 250;
 const EVO_DURATION = 10.0;
 const SPEED_STEP_INTERVAL = 50.0;
 
@@ -1302,6 +1300,25 @@ const WORLD_SPEED_SCALE = 15.0 / INITIAL_BASE_SPEED;
 
 const EVO_STATE_NORMAL = 'NORMAL';
 const EVO_STATE_ACTIVE = 'EVOLUTION_ACTIVE';
+const TOTAL_ENERGY_STORAGE_KEY = 'futureTiger_totalEnergy';
+
+function loadPersistentTotalEnergy() {
+  try {
+    const raw = window.localStorage.getItem(TOTAL_ENERGY_STORAGE_KEY);
+    const parsed = parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+function savePersistentTotalEnergy(val) {
+  try {
+    window.localStorage.setItem(TOTAL_ENERGY_STORAGE_KEY, String(val));
+  } catch (_) {
+    // Safe fallback: totalEnergy remains preserved in memory for the session
+  }
+}
 
 let running = false, ended = false, paused = false;
 let resumeCountdown = 0; // > 0 while counting down 3 -> 2 -> 1 -> GO
@@ -1309,11 +1326,12 @@ let lane = 0, targetLaneX = 0;
 let jump = 0, slide = 0, rollAngle = 0, rollBlend = 0;
 let score = 0;
 
-// Unified single energy counter & Evolution state
+// Independent Energy Variables
+let totalEnergy = loadPersistentTotalEnergy(); // System A: Permanent accumulated Total Energy
+let evoProgress = 0;                           // System B: Temporary Evolution Progress (0..250+)
 let evoState = EVO_STATE_NORMAL;
-let energy = 0;            // Normal energy counter (+1 per particle; resets to 0 when Evolution ends)
-let evoTimeLeft = 0;       // 10.0s active Evolution timer
-let evoVisualBlend = 0;    // Smooth 0..1 visual transition blend for Arca tiger materials
+let evoTimeLeft = 0;                           // 10.0s active Evolution timer
+let evoVisualBlend = 0;
 
 // Simulation clock (advances ONLY during active unpaused, non-countdown gameplay)
 let animTime = 0;
@@ -1464,8 +1482,11 @@ function updateEvolutionVisuals(dt, simTime) {
 }
 
 function updateEnergyAndEvolutionHUD() {
-  energyEl.textContent = energy;
-  evoCountEl.textContent = `${energy} / ${EVO_THRESHOLD}`;
+  // System A: Top HUD displays permanent accumulated Total Energy
+  energyEl.textContent = totalEnergy;
+
+  // System B: Evolution Progress Bar displays temporary Evolution Progress / 250
+  evoCountEl.textContent = `${evoProgress} / ${EVO_THRESHOLD}`;
 
   if (evoState === EVO_STATE_ACTIVE) {
     evoPillEl.classList.add('active');
@@ -1474,9 +1495,12 @@ function updateEnergyAndEvolutionHUD() {
   } else {
     evoPillEl.classList.remove('active');
     evoStatusEl.textContent = 'ENERGI EVOLUSI';
-    evoFillEl.style.width = `${Math.min(100, (energy / EVO_THRESHOLD) * 100)}%`;
+    evoFillEl.style.width = `${Math.min(100, (evoProgress / EVO_THRESHOLD) * 100)}%`;
   }
 }
+
+// Initialize HUD on page load so persistent Total Energy is immediately reflected
+updateEnergyAndEvolutionHUD();
 
 function activateEvolutionMode() {
   if (evoState === EVO_STATE_ACTIVE) return;
@@ -1494,8 +1518,8 @@ function completeEvolutionMode() {
   evoState = EVO_STATE_NORMAL;
   evoTimeLeft = 0;
 
-  // Reset normal energy counter and Evolution progress bar to 0 exactly once when Evolution ends
-  energy = 0;
+  // Reset Evolution Progress ONLY; Total Energy remains permanently accumulated
+  evoProgress = 0;
   restoreOriginalTigerMaterials();
   updateEnergyAndEvolutionHUD();
 }
@@ -1525,8 +1549,9 @@ function start() {
   rollBlend = 0;
   score = 0;
 
+  // Reset temporary Evolution state & progress for the new run; NEVER reset totalEnergy
   evoState = EVO_STATE_NORMAL;
-  energy = 0;
+  evoProgress = 0;
   evoTimeLeft = 0;
   evoVisualBlend = 0;
 
@@ -1584,7 +1609,7 @@ function end() {
   restoreOriginalTigerMaterials();
   rocketPlumes.forEach(rp => { rp.plume.visible = false; });
   windMat.opacity = 0;
-  overlay.innerHTML = `<div class="panel"><div class="eyebrow"><span class="dot"></span> LARIAN TAMAT</div><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor Akhir: <b class="accent">${Math.floor(score)}</b><br>Tenaga Dikumpul: <b class="cyan-text">${energy} / ${EVO_THRESHOLD}</b></p><button id="start">CUBA LAGI</button><div class="small">BEYOND NATURE &nbsp;·&nbsp; FUTURE TIGER RUNNER</div></div>`;
+  overlay.innerHTML = `<div class="panel"><div class="eyebrow"><span class="dot"></span> LARIAN TAMAT</div><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor Akhir: <b class="accent">${Math.floor(score)}</b><br>Jumlah Tenaga: <b class="cyan-text">${totalEnergy}</b></p><button id="start">CUBA LAGI</button><div class="small">BEYOND NATURE &nbsp;·&nbsp; FUTURE TIGER RUNNER</div></div>`;
   overlay.style.display = 'flex';
   document.querySelector('#start').addEventListener('click', start);
 }
@@ -1595,8 +1620,15 @@ function isGameplayInputAllowed() {
 
 function move(d) {
   if (!isGameplayInputAllowed()) return;
-  lane = Math.max(-1, Math.min(1, lane + d));
-  targetLaneX = lane * 2.15;
+  const nextLane = Math.max(-1, Math.min(1, lane + d));
+  if (nextLane !== lane) {
+    lane = nextLane;
+    targetLaneX = lane * 2.15;
+    // Immediate onset impulse so the tiger visibly begins shifting on the exact input frame
+    tiger.position.x += (targetLaneX - tiger.position.x) * 0.18;
+  } else {
+    targetLaneX = lane * 2.15;
+  }
 }
 
 function doJump() {
@@ -1653,25 +1685,93 @@ function togglePause() {
 
 pauseBtn.addEventListener('click', e => { e.stopPropagation(); togglePause(); });
 document.querySelector('#start').addEventListener('click', start);
-document.querySelector('#left').onclick = () => move(-1);
-document.querySelector('#right').onclick = () => move(1);
-document.querySelector('#jump').onclick = doJump;
-document.querySelector('#slide').onclick = doSlide;
 
-let touchX = 0, touchY = 0;
+// ============================================================================
+// OBJECTIVE 1: IMMEDIATE MOBILE TOUCH & BUTTON INPUT HANDLING
+// - On-screen buttons trigger on `pointerdown` (eliminating `onclick` release delay)
+// - Touch swipes trigger during `touchmove` as soon as the finger crosses the
+//   16px directional threshold, with `swipeCommitted` locking 1 action per gesture
+// ============================================================================
+function bindInstantButton(selector, actionFn) {
+  const btn = document.querySelector(selector);
+  if (!btn) return;
+  let lastTriggerTime = 0;
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    lastTriggerTime = performance.now();
+    actionFn();
+  });
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    if (performance.now() - lastTriggerTime > 350) {
+      actionFn();
+    }
+  });
+}
+
+bindInstantButton('#left', () => move(-1));
+bindInstantButton('#right', () => move(1));
+bindInstantButton('#jump', doJump);
+bindInstantButton('#slide', doSlide);
+
+let touchX = 0, touchY = 0, activeTouchId = null, swipeCommitted = false;
+const SWIPE_TRIGGER_PX = 16;
+
 renderer.domElement.addEventListener('touchstart', e => {
-  touchX = e.changedTouches[0].clientX;
-  touchY = e.changedTouches[0].clientY;
+  if (!e.changedTouches.length) return;
+  const t = e.changedTouches[0];
+  activeTouchId = t.identifier;
+  touchX = t.clientX;
+  touchY = t.clientY;
+  swipeCommitted = false;
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchmove', e => {
+  if (swipeCommitted || !isGameplayInputAllowed()) return;
+  let t = null;
+  for (let i = 0; i < e.changedTouches.length; i++) {
+    if (e.changedTouches[i].identifier === activeTouchId) {
+      t = e.changedTouches[i];
+      break;
+    }
+  }
+  if (!t) t = e.changedTouches[0];
+  if (!t) return;
+
+  const dx = t.clientX - touchX;
+  const dy = t.clientY - touchY;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_TRIGGER_PX) return;
+
+  // Commit immediately on threshold crossing so the tiger reacts during the swipe
+  swipeCommitted = true;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    move(dx > 0 ? 1 : -1);
+  } else if (dy < 0) {
+    doJump();
+  } else {
+    doSlide();
+  }
 }, { passive: true });
 
 renderer.domElement.addEventListener('touchend', e => {
-  if (!isGameplayInputAllowed()) return;
-  const dx = e.changedTouches[0].clientX - touchX;
-  const dy = e.changedTouches[0].clientY - touchY;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < 25) return;
-  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
-  else if (dy < 0) doJump();
-  else doSlide();
+  if (!swipeCommitted && isGameplayInputAllowed() && e.changedTouches.length) {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchX;
+    const dy = t.clientY - touchY;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) >= 14) {
+      swipeCommitted = true;
+      if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
+      else if (dy < 0) doJump();
+      else doSlide();
+    }
+  }
+  activeTouchId = null;
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchcancel', () => {
+  activeTouchId = null;
+  swipeCommitted = false;
 }, { passive: true });
 
 addEventListener('keydown', e => {
@@ -1790,7 +1890,12 @@ function animate(now) {
       fillerOrbSpawn = Math.max(0.72, 1.25 / Math.pow(speedMultiplier, 0.5)) + Math.random() * 0.55;
     }
 
-    tiger.position.x += (targetLaneX - tiger.position.x) * Math.min(1, dt * 14);
+    // Responsive, frame-rate independent lane interpolation
+    const laneLerpFactor = 1.0 - Math.exp(-22.0 * dt);
+    tiger.position.x += (targetLaneX - tiger.position.x) * laneLerpFactor;
+    if (Math.abs(targetLaneX - tiger.position.x) < 0.005) {
+      tiger.position.x = targetLaneX;
+    }
 
     jump = Math.max(0, jump - dt);
     slide = Math.max(0, slide - dt);
@@ -1894,6 +1999,7 @@ function animate(now) {
       pe.mesh.material.opacity = (1 - prog) * 0.88;
       if (pe.life <= 0) {
         scene.remove(pe.mesh);
+        pe.mesh.material.dispose();
         pickupEffects.splice(i, 1);
       }
     }
@@ -1928,12 +2034,15 @@ function animate(now) {
           scene.remove(it.g);
           items.splice(i, 1);
 
-          // Independent +1 Energy Collection:
-          // - Always adds +1 to `energy` and updates HUD.
-          // - Triggers Evolution Mode once when reaching 1000 in NORMAL state.
-          // - Continues adding +1 during EVOLUTION_ACTIVE without re-triggering or resetting `evoTimeLeft`.
-          energy += ENERGY_GAIN;
-          if (evoState === EVO_STATE_NORMAL && energy >= EVO_THRESHOLD) {
+          // Increment BOTH independent energy counters by +1:
+          // 1) System A: Permanent Total Energy (persisted in background)
+          totalEnergy += ENERGY_GAIN;
+          savePersistentTotalEnergy(totalEnergy);
+
+          // 2) System B: Temporary Evolution Progress (activates Evolution Mode at 250)
+          evoProgress += ENERGY_GAIN;
+
+          if (evoState === EVO_STATE_NORMAL && evoProgress >= EVO_THRESHOLD) {
             activateEvolutionMode();
           } else {
             updateEnergyAndEvolutionHUD();
@@ -1968,8 +2077,8 @@ function animate(now) {
     }
 
     const lateralDelta = targetLaneX - tiger.position.x;
-    tiger.rotation.z += (lateralDelta * -0.055 - tiger.rotation.z) * Math.min(1, dt * 10);
-    tiger.rotation.y += (lateralDelta * 0.045 - tiger.rotation.y) * Math.min(1, dt * 8);
+    tiger.rotation.z += (lateralDelta * -0.055 - tiger.rotation.z) * Math.min(1, dt * 14);
+    tiger.rotation.y += (lateralDelta * 0.045 - tiger.rotation.y) * Math.min(1, dt * 12);
   }
 
   renderer.render(scene, camera);
@@ -1980,7 +2089,7 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 });
 </script>
 </body>
