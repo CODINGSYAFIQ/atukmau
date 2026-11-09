@@ -1,72 +1,236 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="ms">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Future Tiger Runner</title>
+<title>Future Tiger Runner — Beyond Nature</title>
 <style>
-  :root{color-scheme:dark}
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#08110f;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  :root{
+    color-scheme:dark;
+    --bg-deep:#071310;
+    --glass-top:rgba(12, 31, 26, 0.72);
+    --glass-bottom:rgba(7, 19, 16, 0.84);
+    --border-cyan:rgba(104, 238, 214, 0.34);
+    --border-gold:rgba(238, 213, 138, 0.38);
+    --cyan-glow:#5ef2d6;
+    --gold-accent:#ffe374;
+    --text-main:#f3f8f4;
+    --text-muted:#9ec2b5;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg-deep);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   #game{position:fixed;inset:0}
-  #game:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#07120e80 0%,transparent 30%,transparent 66%,#07120eb0 100%),radial-gradient(ellipse at 50% 52%,transparent 35%,#06100c66 100%)}
-  #hud:before{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 90px #020806aa}
-  .brand{display:flex;align-items:center;gap:8px}
-  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f9df5a;box-shadow:0 0 12px #ffe76a}
-  .stat-label{font-size:9px;letter-spacing:.18em;color:#9caf9e}
-  #toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-weight:900;letter-spacing:.18em;color:#fff1a5;text-shadow:0 0 24px #ffe25b;opacity:0;transition:opacity .2s;white-space:nowrap}
-  .panel{backdrop-filter:blur(16px)}
+  #game:after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(180deg,rgba(8,24,20,0.42) 0%,transparent 22%,transparent 74%,rgba(6,18,15,0.62) 100%),
+      radial-gradient(ellipse at 50% 50%,transparent 48%,rgba(4,14,12,0.38) 100%);
+  }
   canvas{display:block;width:100%;height:100%}
-  #hud{position:absolute;inset:0;pointer-events:none;color:#f7f2df}
-  .top{display:flex;justify-content:space-between;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 14px 0}
-  .pill{background:linear-gradient(135deg,#14231ddd,#09110fe8);border:1px solid #e2d7a755;border-radius:15px;padding:10px 13px;backdrop-filter:blur(12px);font-weight:750;font-size:13px;letter-spacing:.04em;box-shadow:0 8px 24px #0004}
-  #score{font-size:20px;color:#ffe46a;text-shadow:0 0 18px #ffd94355}
-  #tip{position:absolute;top:78px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#0c1914b8;border:1px solid #b4c8a52b;border-radius:999px;padding:9px 15px;font-size:11px;color:#d8e4d5;letter-spacing:.03em;box-shadow:0 8px 24px #0003}
-  #bottom{position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:0;right:0;display:flex;justify-content:center;gap:12px;pointer-events:auto}
-  .ctrl{width:62px;height:56px;border-radius:18px;border:1px solid #f2df8c66;background:linear-gradient(145deg,#23382bdd,#0c1713ee);color:#fff4ca;font-size:21px;font-weight:800;box-shadow:0 8px 25px #0006,inset 0 1px #ffffff16;touch-action:manipulation}
-  .ctrl:active{transform:scale(.96);background:#43513b}
-  #overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 42%,#1e3429a6,#07100aeb 70%);pointer-events:auto;padding:24px}
-  .panel{max-width:360px;width:100%;text-align:center;border:1px solid #d8c99177;border-radius:26px;padding:28px 23px;background:linear-gradient(145deg,#1b2a21f2,#0a120ff5);box-shadow:0 24px 90px #000a,inset 0 1px #ffffff12}
-  h1{font-size:clamp(26px,7vw,38px);line-height:1.05;margin:0 0 8px;color:#f8edc6;letter-spacing:.04em}
-  .accent{color:#ffe45f}
-  p{color:#d0dbcf;line-height:1.55;font-size:14px}
-  #start{margin-top:10px;border:0;border-radius:14px;padding:15px 22px;background:linear-gradient(135deg,#ffed8a,#d9b52e);color:#172017;font-weight:950;font-size:15px;width:100%;box-shadow:0 8px 26px #e5c63d30;letter-spacing:.08em}
-  .small{font-size:12px;color:#9fb0a0;margin-top:14px}
-  /* Mobile-first readability pass */
-  @media(max-width:600px){
-    .top{gap:8px;padding-left:12px;padding-right:12px}
-    .pill{font-size:14px;padding:10px 11px;line-height:1.35;border-radius:13px}
-    .pill span{font-size:12px!important}
-    #score{font-size:23px}
-    #energy{font-size:18px}
-    #tip{top:86px;width:calc(100vw - 24px);max-width:440px;white-space:normal;text-align:center;font-size:13px;line-height:1.5;padding:10px 13px;border-radius:15px}
-    #bottom{gap:10px;bottom:calc(16px + env(safe-area-inset-bottom));padding:0 12px}
-    .ctrl{flex:1;max-width:78px;height:62px;font-size:25px;border-radius:18px}
-    .panel{padding:28px 22px;max-width:390px}
-    h1{font-size:clamp(34px,9vw,44px)}
-    p{font-size:16px;line-height:1.65}
-    #start{font-size:17px;min-height:54px}
-    .small{font-size:12px;line-height:1.5}
+  #hud{position:absolute;inset:0;pointer-events:none;color:var(--text-main)}
+  .top{
+    display:flex;justify-content:space-between;align-items:stretch;gap:10px;
+    padding:calc(12px + env(safe-area-inset-top)) 14px 0;
+    max-width:760px;margin:0 auto;
   }
-  @media(max-width:380px){
-    .pill{font-size:12px;padding:9px}
-    .pill span{font-size:11px!important}
-    #tip{font-size:12px;top:82px}
-    #bottom{gap:7px}
-    .ctrl{height:58px;font-size:23px}
-    .panel{padding:24px 18px}
+  .pill{
+    background:linear-gradient(145deg,var(--glass-top),var(--glass-bottom));
+    border:1px solid var(--border-cyan);
+    border-radius:16px;padding:9px 14px;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:0 8px 24px rgba(0,0,0,0.28),inset 0 1px rgba(255,255,255,0.12);
+    font-weight:700;font-size:12px;letter-spacing:.05em;
+    display:flex;flex-direction:column;justify-content:center;
   }
-  @media(min-width:800px){#tip{top:88px}.ctrl{width:72px}}
+  .brand-title{
+    display:flex;align-items:center;gap:7px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#ffffff;
+  }
+  .bio-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--cyan-glow);
+    box-shadow:0 0 10px var(--cyan-glow);
+  }
+  .brand-sub{font-size:9.5px;letter-spacing:.14em;color:var(--text-muted);margin-top:2px}
+  .stats-pill{
+    flex-direction:row;align-items:center;gap:14px;padding:8px 15px;
+    border-color:var(--border-gold);
+  }
+  .stat-block{display:flex;flex-direction:column;align-items:flex-end}
+  .stat-label{font-size:9px;letter-spacing:.16em;color:var(--text-muted);text-transform:uppercase}
+  #energy{font-size:18px;font-weight:850;color:var(--cyan-glow);text-shadow:0 0 12px rgba(94,242,214,0.45);line-height:1.1}
+  #score{font-size:20px;font-weight:900;color:var(--gold-accent);text-shadow:0 0 14px rgba(255,227,116,0.4);line-height:1.1}
+  .stat-divider{width:1px;height:24px;background:rgba(255,255,255,0.14)}
+  #pauseBtn{
+    pointer-events:auto;cursor:pointer;min-width:46px;padding:0 12px;
+    font-size:14px;color:var(--cyan-glow);
+    align-items:center;justify-content:center;touch-action:manipulation;
+    transition:transform .12s,background .15s;
+  }
+  #pauseBtn:active{transform:scale(.94)}
+  #evoHud{
+    max-width:760px;margin:8px auto 0;padding:0 14px;
+    display:flex;justify-content:flex-start;align-items:center;
+  }
+  .evo-pill{
+    width:100%;max-width:340px;
+    background:linear-gradient(145deg,rgba(12,31,26,0.72),rgba(7,19,16,0.84));
+    border:1px solid var(--border-cyan);border-radius:13px;
+    padding:6px 12px 7px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.24);
+    transition:border-color .25s,box-shadow .25s;
+  }
+  .evo-pill.active{
+    border-color:rgba(255,227,116,0.85);
+    box-shadow:0 0 22px rgba(94,242,214,0.34),0 0 14px rgba(155,93,229,0.28);
+  }
+  .evo-header{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:9.5px;font-weight:800;letter-spacing:.14em;color:var(--text-muted);
+    margin-bottom:4px;
+  }
+  #evoStatus{color:var(--text-main)}
+  .evo-pill.active #evoStatus{
+    color:var(--gold-accent);text-shadow:0 0 10px rgba(255,227,116,0.6);
+  }
+  #evoCount{color:var(--cyan-glow);font-weight:850;letter-spacing:.08em}
+  .evo-track{
+    width:100%;height:7px;border-radius:999px;
+    background:rgba(4,14,12,0.75);border:1px solid rgba(255,255,255,0.1);
+    overflow:hidden;position:relative;
+  }
+  #evoFill{
+    width:0%;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,#1fd1b8,#5ef2d6,#38b6ff,#ffe374);
+    box-shadow:0 0 12px rgba(94,242,214,0.65);
+    transition:width .14s ease-out;
+  }
+  .evo-pill.active #evoFill{
+    background:linear-gradient(90deg,#00f5d4,#3a86ff,#9b5de5,#f15bb5,#fee440,#00f5d4);
+    background-size:200% 100%;
+    animation:evoShimmer 1.4s linear infinite;
+  }
+  @keyframes evoShimmer{
+    0%{background-position:0% 50%}
+    100%{background-position:200% 50%}
+  }
+  #tip{
+    position:absolute;top:calc(116px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+    white-space:nowrap;background:rgba(9,25,21,0.62);
+    border:1px solid rgba(104,238,214,0.22);border-radius:999px;
+    padding:6px 14px;font-size:10px;color:#d8efe8;letter-spacing:.06em;
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 6px 20px rgba(0,0,0,0.22);
+    display:flex;align-items:center;gap:7px;
+  }
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan-glow);box-shadow:0 0 8px var(--cyan-glow)}
+  #bottom{
+    position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));
+    left:0;right:0;display:flex;justify-content:center;gap:12px;pointer-events:auto;
+  }
+  .ctrl{
+    width:64px;height:56px;border-radius:18px;
+    border:1px solid rgba(104,238,214,0.36);
+    background:linear-gradient(155deg,rgba(20,48,40,0.82),rgba(8,22,18,0.9));
+    color:#ebfffb;font-size:20px;font-weight:800;
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    box-shadow:0 8px 22px rgba(0,0,0,0.42),inset 0 1px rgba(255,255,255,0.16);
+    touch-action:manipulation;cursor:pointer;transition:transform .1s,border-color .15s;
+  }
+  .ctrl:active{transform:scale(.94);background:rgba(32,74,62,0.92);border-color:var(--cyan-glow)}
+  #overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 42%,rgba(19,52,43,0.58),rgba(5,14,12,0.88) 72%);
+    pointer-events:auto;padding:24px;z-index:20;
+  }
+  .panel{
+    max-width:370px;width:100%;text-align:center;
+    border:1px solid rgba(104,238,214,0.38);border-radius:26px;
+    padding:28px 24px;
+    background:linear-gradient(155deg,rgba(16,38,32,0.92),rgba(7,18,15,0.96));
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    box-shadow:0 24px 80px rgba(0,0,0,0.65),0 0 40px rgba(94,242,214,0.08),inset 0 1px rgba(255,255,255,0.14);
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10px;font-weight:750;letter-spacing:.18em;color:var(--cyan-glow);
+    background:rgba(94,242,214,0.1);border:1px solid rgba(94,242,214,0.28);
+    border-radius:999px;padding:5px 12px;margin-bottom:12px;
+  }
+  h1{font-size:clamp(28px,7vw,38px);line-height:1.04;margin:0 0 8px;color:#f7fffc;letter-spacing:.05em}
+  .accent{color:var(--gold-accent);text-shadow:0 0 20px rgba(255,227,116,0.28)}
+  .cyan-text{color:var(--cyan-glow)}
+  p{color:#cde2da;line-height:1.55;font-size:13.5px;margin:8px 0}
+  #start{
+    margin-top:14px;border:1px solid rgba(255,244,184,0.5);border-radius:15px;padding:15px 22px;
+    background:linear-gradient(135deg,#ffe885,#d8ae2e);
+    color:#0e1c16;font-weight:900;font-size:14.5px;width:100%;
+    box-shadow:0 10px 28px rgba(229,198,61,0.28),inset 0 1px rgba(255,255,255,0.6);
+    letter-spacing:.1em;cursor:pointer;transition:transform .12s;
+  }
+  #start:active{transform:scale(.98)}
+  .small{font-size:10.5px;color:var(--text-muted);margin-top:14px;letter-spacing:.08em}
+  #countdownBadge{
+    position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+    pointer-events:none;z-index:85;display:none;
+    align-items:center;justify-content:center;flex-direction:column;
+    min-width:128px;padding:16px 28px;border-radius:24px;
+    background:linear-gradient(155deg,rgba(14,36,30,0.86),rgba(6,18,15,0.92));
+    border:1px solid var(--border-cyan);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.55),0 0 28px rgba(94,242,214,0.18);
+    text-align:center;
+  }
+  #countdownNum{
+    font-size:clamp(44px,11vw,62px);font-weight:950;line-height:1;
+    color:var(--gold-accent);letter-spacing:.06em;
+    text-shadow:0 0 22px rgba(255,227,116,0.55);
+    transition:transform .12s ease-out;
+  }
+  #countdownSub{
+    font-size:9.5px;font-weight:800;letter-spacing:.18em;color:var(--text-muted);
+    margin-top:6px;text-transform:uppercase;
+  }
+  @media(min-width:800px){#tip{top:124px}.ctrl{width:72px;height:58px}}
 </style>
 </head>
 <body>
 <div id="game"></div>
 <div id="hud">
   <div class="top">
-    <div class="pill">FUTURE TIGER<br><span style="font-size:10px;color:#a9b9a5">GUARDIAN OF THE FOREST</span></div>
-    <div class="pill">TENAGA <span id="energy" style="color:#ffe45f">0</span><br>SKOR <span id="score">0</span></div>
+    <div class="pill">
+      <div class="brand-title"><span class="bio-dot"></span>FUTURE TIGER</div>
+      <div class="brand-sub">GUARDIAN OF THE FOREST</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:stretch">
+      <div class="pill stats-pill">
+        <div class="stat-block">
+          <span class="stat-label">TENAGA</span>
+          <span id="energy">0</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-block">
+          <span class="stat-label">SKOR</span>
+          <span id="score">0</span>
+        </div>
+      </div>
+    </div>
   </div>
-  <div id="tip"><span class="dot"></span> GESER KIRI / KANAN &nbsp;·&nbsp; ATAS: LOMPAT &nbsp;·&nbsp; BAWAH: GELONGSOR</div><div id="toast">EVOLUTION ENERGY +1</div>
+  <div id="evoHud">
+    <div class="evo-pill" id="evoPill">
+      <div class="evo-header">
+        <span id="evoStatus">ENERGI EVOLUSI</span>
+        <span id="evoCount">0 / 1000</span>
+      </div>
+      <div class="evo-track">
+        <div id="evoFill"></div>
+      </div>
+    </div>
+  </div>
+  <div id="tip"><span class="dot"></span> GESER KIRI / KANAN &nbsp;·&nbsp; ATAS: LOMPAT ROKET &nbsp;·&nbsp; BAWAH: GULING</div>
+  <div id="countdownBadge" aria-live="polite">
+    <div id="countdownNum">3</div>
+    <div id="countdownSub">SEDIA BERLARI</div>
+  </div>
   <div id="bottom">
     <button class="ctrl" id="left" aria-label="Kiri">◀</button>
     <button class="ctrl" id="jump" aria-label="Lompat">▲</button>
@@ -76,128 +240,1748 @@
 </div>
 <div id="overlay">
   <div class="panel">
+    <div class="eyebrow"><span class="dot"></span> BEYOND NATURE</div>
     <h1>FUTURE<br><span class="accent">TIGER</span></h1>
-    <p>Beyond Nature: Imaginasi Hidupan Masa Hadapan<br></p>
-    <p>Teroka hutan masa hadapan. Elak halangan, kumpul <span class="accent">Tenaga Evolusi</span> dan buktikan naluri Harimau Futuristik.</p>
+    <p><b class="cyan-text">Imaginasi Hidupan Masa Hadapan</b></p>
+    <p>Teroka ekosistem hutan masa hadapan. Ikuti laluan tenaga, elak halangan, dan kumpul <span class="accent">1000 Energi Evolusi</span> untuk mengaktifkan Mod Evolusi Kebal.</p>
     <button id="start">MULA BERLARI</button>
-    <div class="small">BEYOND NATURE</div>
+    <div class="small">ARCA SENI HALUS &nbsp;·&nbsp; HUTAN BIO-FUTURISTIK</div>
   </div>
 </div>
 <script type="module">
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-const root=document.querySelector('#game');
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x718d79);
-scene.fog=new THREE.FogExp2(0x718d79,.012);
-const camera=new THREE.PerspectiveCamera(57,innerWidth/innerHeight,.1,180);
-camera.position.set(0,5.0,10.8);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));
-renderer.setSize(innerWidth,innerHeight);
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.25;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-root.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xe7f3d8,0x27372c,2.0));
-const sun=new THREE.DirectionalLight(0xffedc2,3.0); sun.position.set(-5,10,4); sun.castShadow=true; scene.add(sun);
-sun.shadow.mapSize.set(1024,1024);
+const root = document.querySelector('#game');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x88b8a8);
+scene.fog = new THREE.FogExp2(0x7eae9e, 0.0092);
 
-const mat=(color,roughness=.72,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
-const grass=mat(0x193526), pathmat=mat(0x373e35,.96), edgeMat=mat(0x7e8a68,.55,.2), ivory=mat(0xd9d2b7,.38,.42), bronze=mat(0x8c613b,.32,.72), dark=mat(0x222a26,.34,.62), black=mat(0x111b17,.4,.5), glow=new THREE.MeshStandardMaterial({color:0xffe35a,emissive:0xffb900,emissiveIntensity:3.0,roughness:.25});
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(240,240),grass);floor.rotation.x=-Math.PI/2;floor.position.y=-.16;floor.position.z=-45;floor.receiveShadow=true;scene.add(floor);
-const farGlow=new THREE.Mesh(new THREE.SphereGeometry(18,24,16),new THREE.MeshBasicMaterial({color:0xb9d59a,transparent:true,opacity:.10,side:THREE.BackSide}));farGlow.position.set(0,13,-68);scene.add(farGlow);
-const sunDisc=new THREE.Mesh(new THREE.CircleGeometry(5,48),new THREE.MeshBasicMaterial({color:0xf6d987,transparent:true,opacity:.25,side:THREE.DoubleSide}));sunDisc.position.set(-10,13,-78);scene.add(sunDisc);
-const road=new THREE.Mesh(new THREE.BoxGeometry(8,.18,130),pathmat);road.position.set(0,-.06,-48);road.receiveShadow=true;scene.add(road);
-for(let x of [-4.15,4.15]){let e=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,130),edgeMat);e.position.set(x,.04,-48);scene.add(e);
- let strip=new THREE.Mesh(new THREE.BoxGeometry(.055,.04,130),glow);strip.position.set(x,.15,-48);scene.add(strip)}
-for(let x of [-2.67,0,2.67]){let rail=new THREE.Mesh(new THREE.BoxGeometry(.025,.018,130),new THREE.MeshStandardMaterial({color:0x9ba88a,emissive:0x30432d,emissiveIntensity:.8}));rail.position.set(x,.045,-48);scene.add(rail)}
-const dashes=[];
-for(let z=12;z>-110;z-=5) for(let x of [-1.33,1.33]){let m=new THREE.Mesh(new THREE.BoxGeometry(.045,.02,1.8),mat(0xc8c6a0));m.position.set(x,.045,z);scene.add(m);dashes.push(m)}
-const laneLights=[];
-for(let z=10;z>-105;z-=8)for(let x of [-3.75,3.75]){let l=new THREE.Mesh(new THREE.BoxGeometry(.13,.12,.55),glow);l.position.set(x,.17,z);scene.add(l);laneLights.push(l)}
-// stylized robotic tiger placeholder: long body, angular head, rectangular ear armor, articulated-looking legs, segmented tail
-const tiger=new THREE.Group();scene.add(tiger);tiger.position.set(0,.25,2);
-function box(parent,w,h,d,material,x,y,z,rx=0,ry=0,rz=0){let o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
-function sphere(parent,sx,sy,sz,material,x,y,z){let o=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),material);o.scale.set(sx,sy,sz);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o}
-box(tiger,1.1,.72,1.9,ivory,0,.82,.05);
-box(tiger,1.15,.10,1.55,bronze,0,1.18,.05);
-for(let side of [-1,1]){box(tiger,.12,.18,1.45,black,side*.49,.88,.03);for(let k=0;k<4;k++)box(tiger,.08,.08,.22,glow,side*.55,1.0,-.52+k*.4)}
-box(tiger,.94,.16,1.6,black,0,1.18,.03);
-for(let i=0;i<5;i++){let stripe=box(tiger,.98,.08,.13,bronze,0,1.29,-.55+i*.28,0,0,(i%2?-.12:.12));}
-const head=new THREE.Group();head.position.set(0,1.03,-1.05);tiger.add(head);
-box(head,.92,.66,.72,ivory,0,0,0);
-box(head,.76,.28,.45,bronze,0,-.14,-.45);
-box(head,.65,.23,.3,dark,0,-.27,-.55);
-for(let s of [-1,1]){
- box(head,.28,.16,.35,bronze,s*.47,.29,.03,0,0,s*-.16);
- box(head,.13,.12,.12,glow,s*.31,.08,-.34);
- box(head,.14,.12,.18,black,s*.25,-.04,-.52);
- box(head,.25,.38,.2,ivory,s*.42,.48,.16,0,0,s*-.22);
- box(head,.3,.13,.24,bronze,s*.42,.53,.12,0,0,s*-.22);
+const camera = new THREE.PerspectiveCamera(57, innerWidth / innerHeight, 0.1, 190);
+camera.position.set(0, 5.0, 10.8);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+root.appendChild(renderer.domElement);
+
+const hemiLight = new THREE.HemisphereLight(0xf2fae4, 0x1c3d32, 1.85);
+scene.add(hemiLight);
+
+const sun = new THREE.DirectionalLight(0xfff1c8, 2.85);
+sun.position.set(-14, 24, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 95;
+sun.shadow.camera.left = -16;
+sun.shadow.camera.right = 16;
+sun.shadow.camera.top = 22;
+sun.shadow.camera.bottom = -45;
+sun.shadow.bias = -0.0005;
+scene.add(sun);
+
+const rimLight = new THREE.DirectionalLight(0x64f5dc, 0.75);
+rimLight.position.set(12, 8, -18);
+scene.add(rimLight);
+
+// ============================================================================
+// PROCEDURAL CANVAS TEXTURES (HAND-PAINTED ARCA STRIPES, COLLAR & FOREST ROAD)
+// ============================================================================
+function createArcaBodyTexture() {
+  const c = document.createElement('canvas');
+  c.width = 1024;
+  c.height = 1024;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = '#f6f4ee';
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  for (let i = 0; i < 6500; i++) {
+    const x = Math.random() * 1024;
+    const y = Math.random() * 1024;
+    const r = 1 + Math.random() * 2.5;
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(230,225,214,0.26)' : 'rgba(255,255,255,0.35)';
+    ctx.fillRect(x, y, r, r);
+  }
+
+  const bellyGradL = ctx.createLinearGradient(0, 0, 180, 0);
+  bellyGradL.addColorStop(0, 'rgba(222,216,204,0.45)');
+  bellyGradL.addColorStop(1, 'rgba(246,244,238,0)');
+  ctx.fillStyle = bellyGradL;
+  ctx.fillRect(0, 0, 180, 1024);
+
+  const bellyGradR = ctx.createLinearGradient(844, 0, 1024, 0);
+  bellyGradR.addColorStop(0, 'rgba(246,244,238,0)');
+  bellyGradR.addColorStop(1, 'rgba(222,216,204,0.45)');
+  ctx.fillStyle = bellyGradR;
+  ctx.fillRect(844, 0, 180, 1024);
+
+  function drawTaperedStripe(x0, y0, cx, cy, x1, y1, maxW) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    const steps = 28;
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      const inv = 1 - t;
+      const px = inv * inv * x0 + 2 * inv * t * cx + t * t * x1;
+      const py = inv * inv * y0 + 2 * inv * t * cy + t * t * y1;
+      const taper = Math.sin(Math.pow(t, 0.65) * Math.PI);
+      const radius = Math.max(2.5, maxW * taper);
+      ctx.beginPath();
+      ctx.arc(px, py, radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#141615';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  const stripeRows = [
+    { y: 195, split: false, tilt: -18, w: 16 },
+    { y: 280, split: true,  tilt: 14,  w: 18 },
+    { y: 375, split: false, tilt: -12, w: 19 },
+    { y: 470, split: true,  tilt: 16,  w: 19 },
+    { y: 565, split: false, tilt: -15, w: 18 },
+    { y: 660, split: true,  tilt: 12,  w: 18 },
+    { y: 755, split: false, tilt: -20, w: 17 },
+    { y: 840, split: false, tilt: -26, w: 16 }
+  ];
+
+  stripeRows.forEach((st, idx) => {
+    drawTaperedStripe(
+      522, st.y,
+      360, st.y + st.tilt,
+      175, st.y + st.tilt * 2.1 + (idx % 2 === 0 ? 18 : -14),
+      st.w
+    );
+    drawTaperedStripe(
+      502, st.y,
+      664, st.y - st.tilt,
+      849, st.y - st.tilt * 2.1 + (idx % 2 === 0 ? -14 : 18),
+      st.w
+    );
+    if (st.split) {
+      drawTaperedStripe(490, st.y + 34, 340, st.y + 48, 205, st.y + 38, st.w * 0.72);
+      drawTaperedStripe(534, st.y + 34, 684, st.y + 48, 819, st.y + 38, st.w * 0.72);
+    }
+  });
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
 }
-const legs=[];
-for(let x of [-.39,.39])for(let z of [-.55,.73]){
- const leg=new THREE.Group();leg.position.set(x,.65,z);tiger.add(leg);
- box(leg,.25,.58,.28,ivory,0,-.23,0);
- box(leg,.3,.16,.32,dark,0,-.48,-.02);
- box(leg,.32,.12,.38,bronze,0,-.55,-.09);
- box(leg,.06,.07,.13,glow,0,-.56,-.27);
- legs.push(leg);
+
+function createArcaFaceTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = '#f6f4ee';
+  ctx.fillRect(0, 0, 512, 512);
+
+  for (let i = 0; i < 2000; i++) {
+    ctx.fillStyle = i % 2 ? 'rgba(228,223,212,0.25)' : 'rgba(255,255,255,0.3)';
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+  }
+
+  ctx.strokeStyle = '#141615';
+  ctx.fillStyle = '#141615';
+  ctx.lineCap = 'round';
+
+  ctx.lineWidth = 11;
+  ctx.beginPath();
+  ctx.moveTo(256, 70);
+  ctx.lineTo(256, 195);
+  ctx.stroke();
+
+  const browY = [95, 132, 168];
+  browY.forEach((by, i) => {
+    const span = 78 - i * 12;
+    ctx.lineWidth = 10 - i * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(244, by + 8);
+    ctx.quadraticCurveTo(210, by - 8, 256 - span, by + 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(268, by + 8);
+    ctx.quadraticCurveTo(302, by - 8, 256 + span, by + 6);
+    ctx.stroke();
+  });
+
+  [-1, 1].forEach(s => {
+    const cx = 256 + s * 135;
+    ctx.lineWidth = 12;
+    ctx.beginPath();
+    ctx.moveTo(cx, 150);
+    ctx.quadraticCurveTo(cx + s * 26, 230, cx - s * 12, 315);
+    ctx.stroke();
+
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 28, 195);
+    ctx.quadraticCurveTo(cx - s * 5, 255, cx - s * 36, 330);
+    ctx.stroke();
+  });
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
 }
-const tail=new THREE.Group();tail.position.set(0,1.03,.95);tiger.add(tail);
-for(let i=0;i<5;i++){let seg=box(tail,.23-i*.025,.22-i*.025,.33, i%2?dark:ivory,0,.12,.19+i*.27,.14,0,0); if(i===2)box(tail,.25,.06,.14,glow,0,.12,.19+i*.27);}
-const trees=[];
-function makeTree(x,z,scale=1){let g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);scene.add(g);let trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,2.5,7),bronze);trunk.position.y=1.25;trunk.castShadow=true;g.add(trunk);for(let i=0;i<3;i++){let crown=new THREE.Mesh(new THREE.IcosahedronGeometry(.85-i*.12,1),mat(i===1?0x355a3b:0x294631));crown.position.set((i-1)*.42,2.3+i*.25,0);crown.castShadow=true;g.add(crown)}
- let band=new THREE.Mesh(new THREE.TorusGeometry(.27,.035,6,12),glow);band.rotation.x=Math.PI/2;band.position.set(0,1.05,0);g.add(band);
- let mushroom=new THREE.Mesh(new THREE.IcosahedronGeometry(.16,1),new THREE.MeshStandardMaterial({color:0x73b59a,emissive:0x2d8d64,emissiveIntensity:1.1}));mushroom.position.set(.28,.45,.15);g.add(mushroom);trees.push(g)}
-for(let z=8;z>-95;z-=7){makeTree(-6-Math.random()*2,z,.8+Math.random()*.7);makeTree(6+Math.random()*2,z,.8+Math.random()*.7)}
-const items=[];
-function makeItem(type,lane,z){let g=new THREE.Group();g.position.set(lane*2.15,type==='orb'?.95:.0,z);scene.add(g);if(type==='orb'){let o=new THREE.Mesh(new THREE.IcosahedronGeometry(.24,1),glow);o.position.y=.35;o.castShadow=true;g.add(o);let ring=new THREE.Mesh(new THREE.TorusGeometry(.34,.035,8,20),glow);ring.rotation.x=Math.PI/2;ring.position.y=.35;g.add(ring)}else if(type==='low'){box(g,1.25,.65,.6,bronze,0,.42,0);box(g,1.28,.12,.64,glow,0,.76,0)}else if(type==='high'){box(g,1.25,1.5,.65,dark,0,.75,0);box(g,1.3,.15,.7,bronze,0,1.4,0)}else{box(g,1.4,.22,.65,ivory,0,1.0,0);box(g,1.45,.08,.68,glow,0,1.13,0)}items.push({g,type,lane,z,hit:false})}
-let running=false,ended=false, lane=0, jump=0,slide=0, score=0,energy=0, speed=15,spawn=0,orbSpawn=0;
-const overlay=document.querySelector('#overlay'),scoreEl=document.querySelector('#score'),energyEl=document.querySelector('#energy');
-function start(){items.forEach(i=>scene.remove(i.g));items.length=0;lane=0;jump=slide=score=energy=0;speed=15;spawn=.7;orbSpawn=.4;ended=false;running=true;tiger.position.x=0;overlay.style.display='none';scoreEl.textContent='0';energyEl.textContent='0'}
-function end(){running=false;ended=true;overlay.innerHTML=`<div class="panel"><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor: <b>${Math.floor(score)}</b><br>Tenaga Evolusi: <b>${energy}</b></p><button id="start">CUBA LAGI</button><div class="small">Future Tiger Runner</div></div>`;overlay.style.display='flex';document.querySelector('#start').addEventListener('click',start)}
-function move(d){if(!running)return;lane=Math.max(-1,Math.min(1,lane+d))}
-function doJump(){if(running&&jump<=0&&slide<=0)jump=.78}
-function doSlide(){if(running&&jump<=0)slide=.7}
-document.querySelector('#start').addEventListener('click',start);
-document.querySelector('#left').onclick=()=>move(-1);document.querySelector('#right').onclick=()=>move(1);document.querySelector('#jump').onclick=doJump;document.querySelector('#slide').onclick=doSlide;
-let touchX=0,touchY=0;
-renderer.domElement.addEventListener('touchstart',e=>{touchX=e.changedTouches[0].clientX;touchY=e.changedTouches[0].clientY},{passive:true});
-renderer.domElement.addEventListener('touchend',e=>{if(!running)return;let dx=e.changedTouches[0].clientX-touchX,dy=e.changedTouches[0].clientY-touchY;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1);else if(dy<0)doJump();else doSlide()},{passive:true});
-addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move(-1);if(e.key==='ArrowRight'||e.key==='d')move(1);if(e.key==='ArrowUp'||e.key===' ')doJump();if(e.key==='ArrowDown'||e.key==='s')doSlide()});
-let last=performance.now();
-function animate(now){requestAnimationFrame(animate);let dt=Math.min((now-last)/1000,.04);last=now;
-if(running){
- score+=dt*speed*.65;speed=Math.min(26,15+score*.008);spawn-=dt;orbSpawn-=dt;
- if(spawn<=0){let ln=Math.floor(Math.random()*3)-1;let types=['low','high','gate'];makeItem(types[Math.floor(Math.random()*types.length)],ln,-72);spawn=Math.max(.48,1.15-(speed-15)*.035)+Math.random()*.35}
- if(orbSpawn<=0){let ln=Math.floor(Math.random()*3)-1;for(let i=0;i<4;i++)makeItem('orb',ln,-65-i*2.2);orbSpawn=1.2+Math.random()*1.1}
- tiger.position.x+=(lane*2.15-tiger.position.x)*Math.min(1,dt*12);
- jump=Math.max(0,jump-dt*1.4);slide=Math.max(0,slide-dt);
- tiger.position.y=.25+(jump>0?Math.sin((.78-jump)/.78*Math.PI)*1.5:0);
- tiger.scale.y=slide>0?.62:1;
- legs.forEach((l,i)=>{l.rotation.x=Math.sin(now*.018+(i%2)*Math.PI+(i>1?Math.PI:0))*.65});
- tail.rotation.x=Math.sin(now*.006)*.18;tail.rotation.z=Math.sin(now*.008)*.12;
- for(let d of dashes){d.position.z+=speed*dt;if(d.position.z>14)d.position.z-=125}
- for(let t of trees){t.position.z+=speed*dt*.78;if(t.position.z>15)t.position.z=-95-Math.random()*12}
- for(let i=items.length-1;i>=0;i--){let it=items[i];it.g.position.z+=speed*dt;if(it.type==='orb')it.g.rotation.y+=dt*2;
- if(Math.abs(it.g.position.z-tiger.position.z)<.8&&Math.abs(it.g.position.x-tiger.position.x)<.9&&!it.hit){
-   if(it.type==='orb'){energy++;it.hit=true;scene.remove(it.g);items.splice(i,1);energyEl.textContent=energy;continue}
-   const safe=(it.type==='low'&&jump>.15)||(it.type==='high'&&slide>.1)||(it.type==='gate'&&jump>.15);
-   if(!safe){end();break}else{it.hit=true}
- }
- if(it.g.position.z>13){scene.remove(it.g);items.splice(i,1)}
- }
- scoreEl.textContent=Math.floor(score);
+
+function createCollarTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 128;
+  const ctx = c.getContext('2d');
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 128);
+  grad.addColorStop(0, '#d8b467');
+  grad.addColorStop(0.18, '#f4eaee');
+  grad.addColorStop(0.5, '#f9f2f5');
+  grad.addColorStop(0.82, '#f4eaee');
+  grad.addColorStop(1, '#d8b467');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 128);
+
+  for (let x = 16; x < 512; x += 32) {
+    ctx.fillStyle = '#e08ca4';
+    ctx.beginPath();
+    ctx.arc(x, 64, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#d4a84f';
+    ctx.beginPath();
+    ctx.arc(x + 16, 64, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.needsUpdate = true;
+  return tex;
 }
-camera.position.x+=(tiger.position.x*.22-camera.position.x)*dt*2;camera.lookAt(tiger.position.x*.18,1.1,-3);
-for(let l of laneLights){l.position.z+=running?speed*dt:0;if(l.position.z>14)l.position.z-=120}
-tiger.rotation.z+=(lane*-.045-tiger.rotation.z)*Math.min(1,dt*5);
-tiger.rotation.y+=(lane*.035-tiger.rotation.y)*Math.min(1,dt*4);
-renderer.render(scene,camera)}
+
+function createForestRoadTexture() {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+
+  const g = ctx.createLinearGradient(0, 0, 512, 0);
+  g.addColorStop(0, '#2a3d31');
+  g.addColorStop(0.08, '#4c5245');
+  g.addColorStop(0.5, '#595e4f');
+  g.addColorStop(0.92, '#4c5245');
+  g.addColorStop(1, '#2a3d31');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 512, 512);
+
+  for (let i = 0; i < 3800; i++) {
+    const x = Math.random() * 512;
+    const y = Math.random() * 512;
+    const edgeDist = Math.min(x, 512 - x);
+    if (edgeDist < 48 && Math.random() < 0.55) {
+      ctx.fillStyle = 'rgba(48, 86, 58, 0.38)';
+      ctx.fillRect(x, y, 4 + Math.random() * 6, 4 + Math.random() * 6);
+    } else {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(72, 76, 64, 0.28)' : 'rgba(104, 108, 92, 0.22)';
+      ctx.fillRect(x, y, 2 + Math.random() * 4, 2 + Math.random() * 3);
+    }
+  }
+
+  [171, 341].forEach(lx => {
+    ctx.fillStyle = 'rgba(36, 44, 38, 0.55)';
+    ctx.fillRect(lx - 3, 0, 6, 512);
+    ctx.fillStyle = 'rgba(120, 210, 185, 0.18)';
+    ctx.fillRect(lx - 1, 0, 2, 512);
+  });
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(1, 14);
+  tex.needsUpdate = true;
+  return tex;
+}
+
+// ============================================================================
+// SHARED MATERIALS (OPTIMIZED FOR MOBILE GPU)
+// ============================================================================
+const mat = (color, roughness = 0.72, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+
+const arcaBodyTex = createArcaBodyTexture();
+const arcaFaceTex = createArcaFaceTexture();
+const collarTex = createCollarTexture();
+const roadTex = createForestRoadTexture();
+
+const arcaBodyMat = new THREE.MeshStandardMaterial({ map: arcaBodyTex, roughness: 0.76, metalness: 0.03 });
+const arcaFaceMat = new THREE.MeshStandardMaterial({ map: arcaFaceTex, roughness: 0.76, metalness: 0.03 });
+const ivory = mat(0xf6f4ee, 0.76, 0.03);
+const black = mat(0x141615, 0.72, 0.04);
+const woodMat = mat(0xd8b074, 0.54, 0.06);
+const collarMat = new THREE.MeshStandardMaterial({ map: collarTex, roughness: 0.42, metalness: 0.22 });
+const goldMat = mat(0xd8af56, 0.32, 0.68);
+const silverWire = mat(0xd6dde0, 0.26, 0.82);
+const eyeIrisMat = new THREE.MeshStandardMaterial({ color: 0xb5d69c, emissive: 0x5c8c46, emissiveIntensity: 0.55, roughness: 0.2 });
+
+const grassMat = mat(0x234730, 0.88, 0);
+const mossBorderMat = mat(0x2e583b, 0.85, 0);
+const roadMat = new THREE.MeshStandardMaterial({ map: roadTex, roughness: 0.88, metalness: 0.04 });
+const stoneMat = mat(0x5c695e, 0.82, 0.08);
+const ruinStoneMat = mat(0x6d7b70, 0.75, 0.12);
+const barkWarm = mat(0x5a4230, 0.86, 0.02);
+const barkDark = mat(0x463325, 0.88, 0.02);
+const foliageLush = mat(0x2d633b, 0.78, 0);
+const foliageBright = mat(0x427d48, 0.76, 0);
+const foliageDeep = mat(0x1e4a2c, 0.82, 0);
+const cyanGlow = new THREE.MeshStandardMaterial({ color: 0x68f7de, emissive: 0x1cd4b8, emissiveIntensity: 2.2, roughness: 0.24 });
+const tealGlowSoft = new THREE.MeshStandardMaterial({ color: 0x7efae4, emissive: 0x1aa892, emissiveIntensity: 1.25, roughness: 0.35 });
+const goldGlow = new THREE.MeshStandardMaterial({ color: 0xffe670, emissive: 0xffb700, emissiveIntensity: 2.6, roughness: 0.22 });
+const blossomMat = new THREE.MeshStandardMaterial({ color: 0xffb8d2, emissive: 0xd45b88, emissiveIntensity: 0.75, roughness: 0.4 });
+
+// Rocket Thruster & Refined Evolution Ground-Aura Materials
+const rocketCoreMat = new THREE.MeshBasicMaterial({ color: 0xfff6b8, transparent: true, opacity: 0.95 });
+const rocketFlameMat = new THREE.MeshBasicMaterial({ color: 0xff7b1c, transparent: true, opacity: 0.84 });
+const rocketCyanMat = new THREE.MeshBasicMaterial({ color: 0x5ef2d6, transparent: true, opacity: 0.82 });
+
+const evoAuraOuterMat = new THREE.MeshBasicMaterial({ color: 0x00f5d4, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false });
+const evoAuraInnerMat = new THREE.MeshBasicMaterial({ color: 0x9b5de5, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false });
+
+// ============================================================================
+// LAYERED FUTURISTIC ENCHANTED FOREST ENVIRONMENT & INTEGRATED ROAD
+// ============================================================================
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), grassMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.set(0, -0.16, -50);
+floor.receiveShadow = true;
+scene.add(floor);
+
+const farGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(26, 24, 16),
+  new THREE.MeshBasicMaterial({ color: 0xd8f4e2, transparent: true, opacity: 0.22, side: THREE.BackSide })
+);
+farGlow.position.set(0, 15, -92);
+scene.add(farGlow);
+
+const sunDisc = new THREE.Mesh(
+  new THREE.CircleGeometry(7.5, 40),
+  new THREE.MeshBasicMaterial({ color: 0xfff0b8, transparent: true, opacity: 0.42 })
+);
+sunDisc.position.set(-14, 21, -98);
+scene.add(sunDisc);
+
+const sunShaftMat = new THREE.MeshBasicMaterial({
+  color: 0xe8fae0,
+  transparent: true,
+  opacity: 0.065,
+  depthWrite: false,
+  side: THREE.DoubleSide
+});
+for (let i = 0; i < 5; i++) {
+  const shaft = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 22), sunShaftMat);
+  shaft.position.set(-7 + i * 3.5, 8.5, -18 - i * 16);
+  shaft.rotation.z = -0.32;
+  shaft.rotation.y = 0.25;
+  scene.add(shaft);
+}
+
+const hillsGroup = new THREE.Group();
+scene.add(hillsGroup);
+for (let i = 0; i < 14; i++) {
+  const side = i % 2 === 0 ? -1 : 1;
+  const hMesh = new THREE.Mesh(
+    new THREE.ConeGeometry(9 + (i % 3) * 4, 14 + (i % 4) * 4, 9),
+    i % 3 === 0 ? foliageDeep : mossBorderMat
+  );
+  hMesh.scale.set(1.6, 0.75, 1.2);
+  hMesh.position.set(side * (18 + (i % 4) * 8), 3.5, -20 - i * 9);
+  hillsGroup.add(hMesh);
+}
+
+const road = new THREE.Mesh(new THREE.BoxGeometry(7.8, 0.18, 140), roadMat);
+road.position.set(0, -0.06, -50);
+road.receiveShadow = true;
+scene.add(road);
+
+for (let s of [-1, 1]) {
+  const verge = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.75, 140, 8), mossBorderMat);
+  verge.rotation.x = Math.PI / 2;
+  verge.scale.set(1.2, 0.22, 1);
+  verge.position.set(s * 4.05, -0.04, -50);
+  verge.receiveShadow = true;
+  scene.add(verge);
+
+  const curb = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 140), stoneMat);
+  curb.position.set(s * 3.92, 0.02, -50);
+  curb.receiveShadow = true;
+  scene.add(curb);
+
+  const bioLine = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.025, 140), tealGlowSoft);
+  bioLine.position.set(s * 3.82, 0.095, -50);
+  scene.add(bioLine);
+}
+
+const dashes = [];
+for (let z = 12; z > -115; z -= 5.5) {
+  for (let x of [-1.08, 1.08]) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.018, 1.6), ruinStoneMat);
+    m.position.set(x, 0.035, z);
+    scene.add(m);
+    dashes.push(m);
+  }
+}
+
+const laneLights = [];
+for (let z = 10; z > -110; z -= 8.5) {
+  for (let s of [-1, 1]) {
+    const markerGroup = new THREE.Group();
+    markerGroup.position.set(s * 4.15, 0.02, z);
+    const base = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), stoneMat);
+    base.scale.set(1.2, 0.65, 1.1);
+    markerGroup.add(base);
+    const shard = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), cyanGlow);
+    shard.scale.set(0.75, 1.85, 0.75);
+    shard.position.set(0, 0.22, 0);
+    shard.rotation.z = s * -0.18;
+    markerGroup.add(shard);
+    scene.add(markerGroup);
+    laneLights.push(markerGroup);
+  }
+}
+
+const windStreaks = [];
+const windMat = new THREE.MeshBasicMaterial({ color: 0x9efcf0, transparent: true, opacity: 0.0, depthWrite: false });
+for (let i = 0; i < 10; i++) {
+  const wMesh = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.025, 3.6), windMat);
+  const side = i % 2 === 0 ? -1 : 1;
+  wMesh.position.set(side * (2.6 + (i % 3) * 0.9), 0.7 + (i % 4) * 0.45, -10 - i * 6);
+  scene.add(wMesh);
+  windStreaks.push(wMesh);
+}
+
+// ============================================================================
+// ORIGINAL HANDMADE ARCA WHITE TIGER RECONSTRUCTION + ROLLING PIVOT & EFFECTS
+// ============================================================================
+const tiger = new THREE.Group();
+scene.add(tiger);
+tiger.position.set(0, 0.25, 2);
+
+const tigerRollPivot = new THREE.Group();
+tigerRollPivot.position.set(0, 0.72, 0);
+tiger.add(tigerRollPivot);
+
+const tigerInner = new THREE.Group();
+tigerInner.position.set(0, -0.72, 0);
+tigerRollPivot.add(tigerInner);
+
+function box(parent, w, h, d, material, x, y, z, rx = 0, ry = 0, rz = 0) {
+  const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+  o.position.set(x, y, z);
+  o.rotation.set(rx, ry, rz);
+  o.castShadow = true;
+  o.receiveShadow = true;
+  parent.add(o);
+  return o;
+}
+function sphere(parent, sx, sy, sz, material, x, y, z, rx = 0, ry = 0, rz = 0) {
+  const o = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), material);
+  o.scale.set(sx, sy, sz);
+  o.position.set(x, y, z);
+  o.rotation.set(rx, ry, rz);
+  o.castShadow = true;
+  o.receiveShadow = true;
+  parent.add(o);
+  return o;
+}
+function cyl(parent, rt, rb, h, material, x, y, z, rx = 0, ry = 0, rz = 0, seg = 16) {
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), material);
+  o.position.set(x, y, z);
+  o.rotation.set(rx, ry, rz);
+  o.castShadow = true;
+  o.receiveShadow = true;
+  parent.add(o);
+  return o;
+}
+
+function buildContinuousArcaTorsoGeometry() {
+  const lengthSegs = 32;
+  const radialSegs = 28;
+  const geom = new THREE.CylinderGeometry(1, 1, 2.08, radialSegs, lengthSegs, false);
+  const pos = geom.attributes.position;
+
+  for (let i = 0; i < pos.count; i++) {
+    const vx = pos.getX(i);
+    const vy = pos.getY(i);
+    const vz = pos.getZ(i);
+
+    const t = (vy + 1.04) / 2.08;
+    const zCoord = -1.00 + t * 1.96;
+
+    const endCap = Math.sin(Math.pow(Math.max(0.001, Math.min(0.999, t)), 0.78) * Math.PI);
+    const endRound = Math.pow(endCap, 0.36);
+
+    const shoulderBulge = 0.085 * Math.exp(-Math.pow((t - 0.20) / 0.16, 2));
+    const waistTaper = -0.035 * Math.exp(-Math.pow((t - 0.52) / 0.18, 2));
+    const hipBulge = 0.08 * Math.exp(-Math.pow((t - 0.80) / 0.16, 2));
+
+    const halfWidth = (0.45 + shoulderBulge + waistTaper + hipBulge) * endRound;
+    const halfHeight = (0.37 + 0.03 * Math.exp(-Math.pow((t - 0.22) / 0.2, 2))) * endRound;
+
+    const spineY = 0.78 + 0.045 * Math.exp(-Math.pow((t - 0.16) / 0.18, 2))
+                         - 0.022 * Math.sin(t * Math.PI)
+                         + 0.035 * Math.exp(-Math.pow((t - 0.82) / 0.16, 2));
+
+    let ny = vz * halfHeight;
+    if (vz < 0) {
+      const bellyTuck = 1.0 - 0.14 * Math.exp(-Math.pow((t - 0.50) / 0.22, 2));
+      ny *= bellyTuck;
+    }
+
+    pos.setXYZ(i, vx * halfWidth, spineY + ny, zCoord);
+  }
+  geom.computeVertexNormals();
+  return geom;
+}
+
+const bodyGroup = new THREE.Group();
+tigerInner.add(bodyGroup);
+
+const torsoGeo = buildContinuousArcaTorsoGeometry();
+const torsoMesh = new THREE.Mesh(torsoGeo, arcaBodyMat);
+torsoMesh.castShadow = true;
+torsoMesh.receiveShadow = true;
+bodyGroup.add(torsoMesh);
+
+const collar = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.052, 12, 28), collarMat);
+collar.position.set(0, 0.88, -0.78);
+collar.rotation.x = 0.36;
+collar.scale.set(1.06, 0.94, 1);
+collar.castShadow = true;
+bodyGroup.add(collar);
+
+const collarGoldRim = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.014, 8, 28), goldMat);
+collarGoldRim.position.set(0, 0.89, -0.80);
+collarGoldRim.rotation.x = 0.36;
+collarGoldRim.scale.set(1.06, 0.94, 1);
+bodyGroup.add(collarGoldRim);
+
+sphere(bodyGroup, 0.052, 0.072, 0.048, silverWire, 0, 0.52, -0.96);
+
+for (let s of [-1, 1]) {
+  box(bodyGroup, 0.44, 0.048, 0.024, woodMat, s * 0.44, 1.05, -0.80, 0, s * -0.26, s * -0.22);
+}
+
+const wireLoop = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.013, 6, 14), silverWire);
+wireLoop.position.set(-0.43, 0.33, -0.44);
+wireLoop.rotation.y = Math.PI / 2;
+bodyGroup.add(wireLoop);
+
+const head = new THREE.Group();
+head.position.set(0, 1.04, -1.10);
+tigerInner.add(head);
+
+const craniumGeo = new THREE.SphereGeometry(0.46, 24, 20);
+const cPos = craniumGeo.attributes.position;
+for (let i = 0; i < cPos.count; i++) {
+  let x = cPos.getX(i), y = cPos.getY(i), z = cPos.getZ(i);
+  const cheekFlare = 1.0 + 0.18 * Math.exp(-Math.pow((y + 0.08) / 0.22, 2));
+  x *= 1.05 * cheekFlare;
+  y *= 0.92;
+  z *= 0.96;
+  cPos.setXYZ(i, x, y, z);
+}
+craniumGeo.computeVertexNormals();
+const craniumMesh = new THREE.Mesh(craniumGeo, arcaFaceMat);
+craniumMesh.rotation.y = Math.PI;
+craniumMesh.position.set(0, 0.04, 0);
+craniumMesh.castShadow = true;
+head.add(craniumMesh);
+
+sphere(head, 0.27, 0.19, 0.26, ivory, 0, -0.07, -0.35);
+for (let s of [-1, 1]) {
+  sphere(head, 0.175, 0.145, 0.185, ivory, s * 0.135, -0.13, -0.44);
+  for (let d = 0; d < 3; d++) {
+    sphere(head, 0.016, 0.016, 0.016, black, s * (0.10 + d * 0.042), -0.12 - (d % 2) * 0.028, -0.59);
+  }
+}
+sphere(head, 0.19, 0.105, 0.19, ivory, 0, -0.24, -0.35);
+
+sphere(head, 0.105, 0.072, 0.075, black, 0, -0.04, -0.58);
+box(head, 0.024, 0.105, 0.028, black, 0, -0.13, -0.575);
+for (let s of [-1, 1]) {
+  box(head, 0.088, 0.022, 0.028, black, s * 0.042, -0.19, -0.565, 0, 0, s * -0.34);
+}
+
+for (let s of [-1, 1]) {
+  sphere(head, 0.108, 0.074, 0.058, black, s * 0.21, 0.08, -0.38, 0, s * 0.18, s * -0.14);
+  sphere(head, 0.088, 0.060, 0.056, goldMat, s * 0.21, 0.08, -0.395, 0, s * 0.18, s * -0.14);
+  sphere(head, 0.076, 0.052, 0.055, eyeIrisMat, s * 0.21, 0.08, -0.405, 0, s * 0.18, s * -0.14);
+  box(head, 0.022, 0.056, 0.028, black, s * 0.21, 0.08, -0.445);
+  box(head, 0.17, 0.042, 0.11, black, s * 0.20, 0.17, -0.35, 0, s * 0.14, s * 0.22);
+}
+
+cyl(head, 0.055, 0.075, 0.038, goldMat, 0, 0.38, -0.17, 0.35, 0, 0, 10);
+
+for (let s of [-1, 1]) {
+  const ear = new THREE.Group();
+  ear.position.set(s * 0.33, 0.37, 0.06);
+  ear.rotation.set(-0.08, s * -0.14, s * -0.26);
+  head.add(ear);
+  cyl(ear, 0.028, 0.145, 0.26, black, 0, 0.04, 0.018, 0, 0, 0, 12).scale.set(1, 1, 0.52);
+  cyl(ear, 0.022, 0.115, 0.22, ivory, 0, 0.03, -0.012, 0, 0, 0, 12).scale.set(1, 1, 0.48);
+}
+
+for (let s of [-1, 1]) {
+  for (let i = 0; i < 3; i++) {
+    const wy = -0.075 - i * 0.052;
+    const wz = -0.42 + i * 0.028;
+    const pitch = (i - 1) * 0.085;
+    const yaw = s * (-0.30 - i * 0.038);
+    box(head, 0.52, 0.045, 0.022, woodMat, s * 0.37, wy, wz, pitch, yaw, pitch * s);
+  }
+}
+
+const legs = [];
+const legJointRings = [];
+const rocketPlumes = [];
+const legCoords = [
+  [-0.36, -0.54, true],  // Front-Left
+  [ 0.36, -0.54, true],  // Front-Right
+  [-0.36,  0.66, false], // Rear-Left
+  [ 0.36,  0.66, false]  // Rear-Right
+];
+
+for (const [lx, lz, isFront] of legCoords) {
+  const leg = new THREE.Group();
+  leg.position.set(lx, 0.58, lz);
+  tigerInner.add(leg);
+
+  sphere(leg, 0.21, 0.20, 0.22, ivory, 0, -0.04, 0);
+  const jointRing = new THREE.Mesh(new THREE.TorusGeometry(0.165, 0.015, 8, 16), goldMat);
+  jointRing.rotation.x = Math.PI / 2;
+  jointRing.position.set(0, -0.12, 0);
+  leg.add(jointRing);
+  legJointRings.push(jointRing);
+
+  const legTilt = isFront ? 0.07 : -0.05;
+  const legZ = isFront ? -0.025 : 0.02;
+  cyl(leg, 0.20, 0.175, 0.48, ivory, 0, -0.25, legZ, legTilt, 0, 0, 16);
+
+  for (let k = 0; k < 3; k++) {
+    const sy = -0.11 - k * 0.125;
+    const sr = 0.198 - k * 0.007;
+    cyl(leg, sr, sr, 0.044, black, 0, sy, legZ, legTilt, 0, 0.07 * (k % 2 ? 1 : -1), 16);
+  }
+
+  const pawZ = isFront ? -0.075 : -0.025;
+  sphere(leg, 0.205, 0.12, 0.235, ivory, 0, -0.49, pawZ);
+
+  for (let t = -1.5; t <= 1.5; t += 1) {
+    box(leg, 0.025, 0.105, 0.055, black, t * 0.082, -0.49, pawZ - 0.185, -0.14, 0, 0);
+  }
+
+  cyl(leg, 0.088, 0.088, 0.02, black, 0, -0.58, pawZ + 0.02, 0, 0, 0, 12);
+  for (let t = -1.5; t <= 1.5; t += 1) {
+    cyl(leg, 0.036, 0.036, 0.02, black, t * 0.082, -0.58, pawZ - 0.105 + Math.abs(t) * 0.024, 0, 0, 0, 10);
+  }
+
+  const plume = new THREE.Group();
+  plume.position.set(0, -0.60, pawZ);
+  plume.visible = false;
+  leg.add(plume);
+
+  const outerCone = new THREE.Mesh(new THREE.ConeGeometry(0.115, 0.46, 10), rocketFlameMat);
+  outerCone.position.set(0, -0.22, 0);
+  outerCone.rotation.x = Math.PI;
+  plume.add(outerCone);
+
+  const innerCone = new THREE.Mesh(new THREE.ConeGeometry(0.068, 0.30, 8), rocketCoreMat);
+  innerCone.position.set(0, -0.15, 0);
+  innerCone.rotation.x = Math.PI;
+  plume.add(innerCone);
+
+  const thrustRing = new THREE.Mesh(new THREE.TorusGeometry(0.10, 0.016, 6, 14), rocketCyanMat);
+  thrustRing.rotation.x = Math.PI / 2;
+  thrustRing.position.set(0, -0.05, 0);
+  plume.add(thrustRing);
+
+  const sparks = [];
+  for (let sp = 0; sp < 2; sp++) {
+    const pMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.038, 0), rocketCyanMat);
+    pMesh.position.set((sp === 0 ? -1 : 1) * 0.06, -0.25 - sp * 0.12, 0);
+    plume.add(pMesh);
+    sparks.push(pMesh);
+  }
+
+  rocketPlumes.push({ plume, outerCone, innerCone, thrustRing, sparks });
+  legs.push(leg);
+}
+
+const tail = new THREE.Group();
+tail.position.set(0, 0.92, 0.90);
+tigerInner.add(tail);
+
+let tailMatRef = null;
+function createContinuousArcaTail() {
+  const curve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0, 0.00, 0.00),
+    new THREE.Vector3(0, 0.10, 0.16),
+    new THREE.Vector3(0, 0.34, 0.26),
+    new THREE.Vector3(0, 0.66, 0.30),
+    new THREE.Vector3(0, 0.98, 0.31)
+  ]);
+
+  const tc = document.createElement('canvas');
+  tc.width = 64;
+  tc.height = 512;
+  const tctx = tc.getContext('2d');
+  tctx.fillStyle = '#f6f4ee';
+  tctx.fillRect(0, 0, 64, 512);
+
+  const bands = [
+    [60, 105],
+    [155, 205],
+    [255, 305],
+    [350, 395],
+    [430, 512]
+  ];
+  tctx.fillStyle = '#141615';
+  bands.forEach(([y0, y1]) => tctx.fillRect(0, y0, 64, y1 - y0));
+
+  const tailTex = new THREE.CanvasTexture(tc);
+  tailTex.colorSpace = THREE.SRGBColorSpace;
+  tailMatRef = new THREE.MeshStandardMaterial({ map: tailTex, roughness: 0.74, metalness: 0.03 });
+
+  const tubeGeo = new THREE.TubeGeometry(curve, 28, 0.102, 14, false);
+  const tubeMesh = new THREE.Mesh(tubeGeo, tailMatRef);
+  tubeMesh.castShadow = true;
+  tail.add(tubeMesh);
+
+  sphere(tail, 0.102, 0.115, 0.102, black, 0, 1.00, 0.31);
+}
+createContinuousArcaTail();
+
+// ============================================================================
+// REFINED EVOLUTION VISUAL HIERARCHY (ARCA TIGER IS PRIMARY SUBJECT)
+// ============================================================================
+const evoGroup = new THREE.Group();
+evoGroup.position.set(0, 0.04, 0);
+evoGroup.visible = false;
+tiger.add(evoGroup);
+
+const evoPointLight = new THREE.PointLight(0x00f5d4, 0, 4.2);
+evoPointLight.position.set(0, 0.55, 0.15);
+evoGroup.add(evoPointLight);
+
+const evoRing1 = new THREE.Mesh(new THREE.RingGeometry(0.84, 0.93, 36), evoAuraOuterMat);
+evoRing1.rotation.x = -Math.PI / 2;
+evoRing1.position.y = 0.01;
+evoGroup.add(evoRing1);
+
+const evoRing2 = new THREE.Mesh(new THREE.RingGeometry(0.60, 0.66, 32), evoAuraInnerMat);
+evoRing2.rotation.x = -Math.PI / 2;
+evoRing2.position.y = 0.02;
+evoGroup.add(evoRing2);
+
+const evoPaletteHex = [0x00f5d4, 0x38b6ff, 0x7b2cbf, 0xf15bb5, 0xffe374, 0x2ec4b6];
+const evoSparks = [];
+for (let i = 0; i < 6; i++) {
+  const sMat = new THREE.MeshBasicMaterial({ color: evoPaletteHex[i], transparent: true, opacity: 0.0 });
+  const sMesh = new THREE.Mesh(new THREE.OctahedronGeometry(0.042, 0), sMat);
+  evoGroup.add(sMesh);
+  evoSparks.push({
+    mesh: sMesh,
+    mat: sMat,
+    side: i % 2 === 0 ? -1 : 1,
+    phase: (i / 6) * Math.PI * 2,
+    speed: 2.2 + (i % 3) * 0.35,
+    hueOffset: i / 6
+  });
+}
+
+// ============================================================================
+// MULTI-SPECIES FUTURISTIC ENCHANTED FOREST FLORA (FOREGROUND & MIDDLE GROUND)
+// ============================================================================
+const trees = [];
+function makeTree(x, z, scale = 1, variant = 0) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  g.scale.setScalar(scale);
+  scene.add(g);
+
+  const bMat = variant % 2 === 0 ? barkWarm : barkDark;
+
+  if (variant === 0) {
+    cyl(g, 0.18, 0.32, 2.8, bMat, 0, 1.4, 0, 0.03, 0, -0.02, 9);
+    box(g, 0.035, 1.6, 0.04, tealGlowSoft, 0.19, 1.2, 0, 0, 0, -0.02);
+
+    cyl(g, 0.08, 0.15, 1.3, bMat, -0.38, 2.75, 0.1, 0.12, 0, 0.52, 7);
+    cyl(g, 0.08, 0.14, 1.2, bMat, 0.42, 2.65, -0.1, -0.1, 0, -0.48, 7);
+
+    const crowns = [
+      [0, 3.35, 0, 1.35, 0.58, 1.25, foliageLush],
+      [-0.65, 3.05, 0.2, 0.95, 0.48, 0.92, foliageBright],
+      [0.68, 2.98, -0.15, 0.92, 0.46, 0.88, foliageDeep],
+      [0.1, 3.72, -0.1, 0.98, 0.45, 0.92, foliageBright]
+    ];
+    crowns.forEach(([cx, cy, cz, sx, sy, sz, cm]) => {
+      const cMesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), cm);
+      cMesh.scale.set(sx, sy, sz);
+      cMesh.position.set(cx, cy, cz);
+      cMesh.castShadow = true;
+      cMesh.receiveShadow = true;
+      g.add(cMesh);
+    });
+  } else if (variant === 1) {
+    cyl(g, 0.12, 0.26, 3.4, bMat, 0, 1.7, 0, 0, 0, 0, 8);
+    const tiers = [
+      [1.85, 1.35, 1.15, foliageDeep],
+      [2.55, 1.08, 1.05, foliageLush],
+      [3.18, 0.82, 0.95, foliageBright],
+      [3.72, 0.52, 0.80, foliageBright]
+    ];
+    tiers.forEach(([ty, rad, h, cm], idx) => {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 9), cm);
+      cone.position.set(0, ty, 0);
+      cone.rotation.y = idx * 0.4;
+      cone.castShadow = true;
+      g.add(cone);
+    });
+  } else {
+    cyl(g, 0.16, 0.28, 2.5, bMat, -0.12, 1.25, 0, 0, 0, -0.12, 8);
+    cyl(g, 0.12, 0.20, 2.2, bMat, 0.22, 1.1, 0.12, 0.08, 0, 0.18, 7);
+    const c1 = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), foliageLush);
+    c1.scale.set(1.25, 0.55, 1.15);
+    c1.position.set(0, 2.65, 0);
+    c1.castShadow = true;
+    g.add(c1);
+    const c2 = new THREE.Mesh(new THREE.DodecahedronGeometry(1, 1), foliageBright);
+    c2.scale.set(0.88, 0.45, 0.85);
+    c2.position.set(0.45, 2.35, 0.2);
+    c2.castShadow = true;
+    g.add(c2);
+
+    const ruin = box(g, 0.42, 1.15, 0.36, ruinStoneMat, 0.65, 0.55, 0.25, 0, 0.2, 0.08);
+    box(ruin, 0.06, 0.65, 0.38, tealGlowSoft, 0, 0.05, 0);
+  }
+
+  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.32, 0), stoneMat);
+  rock.scale.set(1.3, 0.7, 1.1);
+  rock.position.set(0.42, 0.15, 0.35);
+  g.add(rock);
+
+  for (let m = 0; m < 2; m++) {
+    const stem = cyl(g, 0.025, 0.035, 0.22, ivory, -0.32 - m * 0.18, 0.11, 0.28 + m * 0.12, 0, 0, 0, 6);
+    const cap = new THREE.Mesh(
+      new THREE.ConeGeometry(0.14 - m * 0.03, 0.12, 8),
+      m === 0 ? cyanGlow : blossomMat
+    );
+    cap.position.set(0, 0.12, 0);
+    stem.add(cap);
+  }
+
+  trees.push(g);
+}
+
+let treeIdx = 0;
+for (let z = 10; z > -108; z -= 6.2) {
+  makeTree(-5.6 - (treeIdx % 3) * 0.8, z, 0.88 + (treeIdx % 3) * 0.18, treeIdx % 3);
+  makeTree( 5.6 + ((treeIdx + 1) % 3) * 0.8, z - 2.4, 0.88 + ((treeIdx + 2) % 3) * 0.18, (treeIdx + 1) % 3);
+  makeTree(-10.2 - (treeIdx % 4) * 1.4, z - 3.1, 1.15 + (treeIdx % 3) * 0.25, (treeIdx + 2) % 3);
+  makeTree( 10.2 + ((treeIdx + 2) % 4) * 1.4, z - 1.2, 1.15 + ((treeIdx + 1) % 3) * 0.25, treeIdx % 3);
+  treeIdx++;
+}
+
+// ============================================================================
+// VERIFIED OBSTACLES, COLLECTIBLES & COORDINATED ENERGY ROUTE GENERATOR (A–F)
+// ============================================================================
+const items = [];
+const pickupEffects = [];
+
+function spawnPickupBurst(x, y, z, colorHex = 0x68f7de, maxScale = 2.2) {
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.16, 0.30, 20),
+    new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.92, side: THREE.DoubleSide })
+  );
+  ring.position.set(x, y, z);
+  scene.add(ring);
+  pickupEffects.push({ mesh: ring, life: 0.30, maxLife: 0.30, maxScale });
+}
+
+function makeItem(type, lane, z, customY = null) {
+  const g = new THREE.Group();
+  const baseY = type === 'orb' ? (customY !== null ? customY : 0.92) : 0.0;
+  g.position.set(lane * 2.15, baseY, z);
+  scene.add(g);
+
+  if (type === 'orb') {
+    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 1), goldGlow);
+    core.position.y = 0.35;
+    core.castShadow = true;
+    g.add(core);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.032, 8, 22), cyanGlow);
+    ring.rotation.x = Math.PI / 2.6;
+    ring.position.y = 0.35;
+    g.add(ring);
+  } else if (type === 'low') {
+    const log = cyl(g, 0.29, 0.31, 1.42, barkWarm, 0, 0.36, 0, 0, 0, Math.PI / 2, 12);
+    log.scale.set(1, 1, 0.92);
+    box(g, 1.26, 0.10, 0.42, foliageLush, 0, 0.64, 0);
+    box(g, 1.18, 0.07, 0.16, goldGlow, 0, 0.71, 0);
+    for (let s of [-1, 1]) {
+      cyl(g, 0.24, 0.24, 0.04, woodMat, s * 0.70, 0.36, 0, 0, 0, Math.PI / 2, 10);
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.22, 0), stoneMat);
+      rock.position.set(s * 0.64, 0.16, 0.12);
+      g.add(rock);
+    }
+  } else if (type === 'high') {
+    for (let s of [-1, 1]) {
+      box(g, 0.22, 1.62, 0.54, ruinStoneMat, s * 0.61, 0.81, 0);
+      box(g, 0.26, 0.28, 0.60, mossBorderMat, s * 0.61, 0.14, 0);
+    }
+    box(g, 1.44, 0.62, 0.60, stoneMat, 0, 1.30, 0);
+    box(g, 1.48, 0.14, 0.64, foliageLush, 0, 1.64, 0);
+    box(g, 1.36, 0.07, 0.58, cyanGlow, 0, 0.96, 0);
+  } else {
+    for (let s of [-1, 1]) {
+      cyl(g, 0.09, 0.12, 1.32, barkDark, s * 0.64, 0.66, 0, 0, 0, 0, 8);
+      box(g, 0.16, 0.16, 0.22, goldMat, s * 0.64, 1.12, 0);
+    }
+    box(g, 1.44, 0.22, 0.54, ivory, 0, 1.12, 0);
+    box(g, 1.48, 0.075, 0.58, goldGlow, 0, 0.98, 0);
+    box(g, 1.36, 0.05, 0.56, cyanGlow, 0, 1.25, 0);
+  }
+
+  items.push({ g, type, lane, z, baseY, hit: false });
+}
+
+function isLaneClearAtZ(ln, zTarget, minDist) {
+  for (const it of items) {
+    if (it.lane === ln && Math.abs(it.g.position.z - zTarget) < minDist) return false;
+  }
+  return true;
+}
+
+function isObstacleNear(ln, zTarget, minDist) {
+  for (const it of items) {
+    if (it.type !== 'orb' && it.lane === ln && Math.abs(it.g.position.z - zTarget) < minDist) return true;
+  }
+  return false;
+}
+
+function spawnSafeOrb(ln, zPos, yBase = 0.92) {
+  for (const it of items) {
+    if (it.lane === ln && Math.abs(it.g.position.z - zPos) < 1.35) {
+      if (it.type === 'orb') return;
+      if (it.type === 'low' && yBase < 1.45) return;
+      if ((it.type === 'high' || it.type === 'gate') && yBase > 0.72) return;
+    }
+  }
+  makeItem('orb', ln, zPos, yBase);
+}
+
+// Verified Coordinated Obstacle & Energy Route Generator (Patterns A–F) — Preserved Unchanged
+function spawnCoordinatedWave(baseZ, activeTime, spdMult) {
+  const allLanes = [-1, 0, 1];
+  const minSafeZDist = 11.5 * spdMult;
+  const candidateLanes = allLanes.filter(l => l !== lastSpawnLane && isLaneClearAtZ(l, baseZ, minSafeZDist));
+  const primaryLane = candidateLanes.length
+    ? candidateLanes[Math.floor(Math.random() * candidateLanes.length)]
+    : allLanes[Math.floor(Math.random() * 3)];
+  lastSpawnLane = primaryLane;
+
+  const primaryType = Math.random() < 0.5 ? 'low' : (Math.random() < 0.5 ? 'high' : 'gate');
+  makeItem(primaryType, primaryLane, baseZ);
+
+  let secondaryLane = null;
+  let secondaryType = null;
+  const remainingLanes = allLanes.filter(l => l !== primaryLane && isLaneClearAtZ(l, baseZ, 13.5 * spdMult));
+
+  if (activeTime > 18 && remainingLanes.length >= 2 && Math.random() < 0.32) {
+    secondaryLane = remainingLanes[Math.floor(Math.random() * remainingLanes.length)];
+    secondaryType = Math.random() < 0.5 ? 'low' : 'gate';
+    makeItem(secondaryType, secondaryLane, baseZ);
+  }
+
+  const openLanes = allLanes.filter(l => l !== primaryLane && l !== secondaryLane);
+  const safeLane = openLanes[Math.floor(Math.random() * openLanes.length)];
+
+  const roll = Math.random();
+  const spacing = 2.35 * Math.min(1.35, Math.pow(spdMult, 0.45));
+
+  if (primaryType === 'low' && roll < 0.30) {
+    const arcHeights = [0.92, 1.48, 1.92, 1.48, 0.92];
+    for (let i = -2; i <= 2; i++) {
+      spawnSafeOrb(primaryLane, baseZ - i * spacing * 0.85, arcHeights[i + 2]);
+    }
+    if (Math.random() < 0.45) {
+      spawnSafeOrb(safeLane, baseZ, 0.92);
+    }
+  } else if ((primaryType === 'high' || primaryType === 'gate') && roll < 0.58) {
+    const rollHeights = [0.85, 0.52, 0.46, 0.52, 0.85];
+    for (let i = -2; i <= 2; i++) {
+      spawnSafeOrb(primaryLane, baseZ - i * spacing * 0.85, rollHeights[i + 2]);
+    }
+  } else if (activeTime > 25 && roll < 0.74) {
+    for (let i = -2; i <= 3; i++) {
+      const zOff = baseZ - i * spacing * 0.82;
+      let yH = 0.92;
+      if (Math.abs(i) <= 1) {
+        yH = primaryType === 'low' ? (i === 0 ? 1.92 : 1.50) : 0.48;
+      }
+      spawnSafeOrb(primaryLane, zOff, yH);
+    }
+    spawnSafeOrb(safeLane, baseZ + spacing, 0.92);
+    spawnSafeOrb(safeLane, baseZ - spacing, 0.92);
+  } else if (activeTime > 40 && openLanes.length >= 1 && roll < 0.86) {
+    const midLane = primaryLane !== 0 && safeLane !== 0 ? 0 : safeLane;
+    const actionY = primaryType === 'low' ? 1.88 : 0.48;
+    spawnSafeOrb(primaryLane, baseZ + spacing * 1.6, 0.92);
+    spawnSafeOrb(primaryLane, baseZ + spacing * 0.8, primaryType === 'low' ? 1.45 : 0.54);
+    spawnSafeOrb(primaryLane, baseZ, actionY);
+    spawnSafeOrb(midLane, baseZ - spacing * 1.1, 0.92);
+    spawnSafeOrb(safeLane, baseZ - spacing * 2.2, 0.92);
+    spawnSafeOrb(safeLane, baseZ - spacing * 3.2, 0.92);
+  } else if (openLanes.length >= 2 && roll < 0.94) {
+    const startLn = openLanes[0];
+    const endLn = openLanes[1];
+    const midLn = (startLn + endLn === 0) ? 0 : endLn;
+    const routeLanes = [startLn, startLn, midLn, endLn, endLn];
+    for (let i = 0; i < routeLanes.length; i++) {
+      const zPos = baseZ + spacing * 1.5 - i * spacing * 1.05;
+      if (!isObstacleNear(routeLanes[i], zPos, 2.2)) {
+        spawnSafeOrb(routeLanes[i], zPos, 0.92);
+      }
+    }
+  } else {
+    const counts = [1, 2, 4, 5];
+    const count = counts[Math.floor(Math.random() * counts.length)];
+    for (let i = 0; i < count; i++) {
+      const zPos = baseZ + spacing - i * spacing * 0.92;
+      if (!isObstacleNear(safeLane, zPos, 2.2)) {
+        spawnSafeOrb(safeLane, zPos, 0.92);
+      }
+    }
+  }
+}
+
+function seedInitialEnergyRoutes() {
+  for (let i = 0; i < 4; i++) {
+    spawnSafeOrb(0, -18 - i * 2.3, 0.92);
+  }
+  const introSwitch = [0, 0, 1, 1, 1];
+  for (let i = 0; i < introSwitch.length; i++) {
+    spawnSafeOrb(introSwitch[i], -36 - i * 2.4, 0.92);
+  }
+}
+
+// ============================================================================
+// ENERGY SYSTEM CORRECTION:
+// - ENERGY_GAIN = 1 (+1 per collected energy particle)
+// - EVO_THRESHOLD = 1000 (1000 individual particles required)
+// - EVO_DURATION = 10.0 seconds with complete obstacle immunity
+// - Removed nextCycleEnergy: energy collection continues during Evolution Mode
+//   without triggering another Evolution, and resets to 0 once when Evolution ends
+// ============================================================================
+const JUMP_DURATION = 0.76, JUMP_HEIGHT = 1.52, SLIDE_DURATION = 0.72;
+const ENERGY_GAIN = 1;
+const EVO_THRESHOLD = 1000;
+const EVO_DURATION = 10.0;
+const SPEED_STEP_INTERVAL = 50.0;
+
+const INITIAL_BASE_SPEED = 0.35;
+const WORLD_SPEED_SCALE = 15.0 / INITIAL_BASE_SPEED;
+
+const EVO_STATE_NORMAL = 'NORMAL';
+const EVO_STATE_ACTIVE = 'EVOLUTION_ACTIVE';
+
+let running = false, ended = false, paused = false;
+let resumeCountdown = 0; // > 0 while counting down 3 -> 2 -> 1 -> GO
+let lane = 0, targetLaneX = 0;
+let jump = 0, slide = 0, rollAngle = 0, rollBlend = 0;
+let score = 0;
+
+// Unified single energy counter & Evolution state
+let evoState = EVO_STATE_NORMAL;
+let energy = 0;            // Normal energy counter (+1 per particle; resets to 0 when Evolution ends)
+let evoTimeLeft = 0;       // 10.0s active Evolution timer
+let evoVisualBlend = 0;    // Smooth 0..1 visual transition blend for Arca tiger materials
+
+// Simulation clock (advances ONLY during active unpaused, non-countdown gameplay)
+let animTime = 0;
+let activePlayTime = 0, speedStage = 0, baseSpeed = INITIAL_BASE_SPEED, speedMultiplier = 1.0, speed = INITIAL_BASE_SPEED * WORLD_SPEED_SCALE;
+let windBoostTimer = 0;
+let spawn = 0, fillerOrbSpawn = 0, lastSpawnLane = 0;
+
+const overlay = document.querySelector('#overlay');
+const scoreEl = document.querySelector('#score');
+const energyEl = document.querySelector('#energy');
+const evoPillEl = document.querySelector('#evoPill');
+const evoStatusEl = document.querySelector('#evoStatus');
+const evoCountEl = document.querySelector('#evoCount');
+const evoFillEl = document.querySelector('#evoFill');
+const countdownBadgeEl = document.querySelector('#countdownBadge');
+const countdownNumEl = document.querySelector('#countdownNum');
+const countdownSubEl = document.querySelector('#countdownSub');
+
+const topRightContainer = document.querySelector('.top > div:last-child');
+const pauseBtn = document.createElement('button');
+pauseBtn.id = 'pauseBtn';
+pauseBtn.type = 'button';
+pauseBtn.setAttribute('aria-label', 'Jeda');
+pauseBtn.className = 'pill';
+pauseBtn.textContent = '❚❚';
+topRightContainer.appendChild(pauseBtn);
+
+const baseWhiteColor = new THREE.Color(0xffffff);
+const baseIvoryColor = new THREE.Color(0xf6f4ee);
+const baseGoldColor = new THREE.Color(0xd8af56);
+const baseWoodColor = new THREE.Color(0xd8b074);
+const blackZeroColor = new THREE.Color(0x000000);
+const tempColor1 = new THREE.Color();
+const tempColor2 = new THREE.Color();
+const tempColor3 = new THREE.Color();
+
+function restoreOriginalTigerMaterials() {
+  evoVisualBlend = 0;
+
+  arcaBodyMat.color.copy(baseWhiteColor);
+  arcaBodyMat.emissive.copy(blackZeroColor);
+  arcaBodyMat.emissiveIntensity = 0;
+
+  arcaFaceMat.color.copy(baseWhiteColor);
+  arcaFaceMat.emissive.copy(blackZeroColor);
+  arcaFaceMat.emissiveIntensity = 0;
+
+  ivory.color.copy(baseIvoryColor);
+  ivory.emissive.copy(blackZeroColor);
+  ivory.emissiveIntensity = 0;
+
+  collarMat.color.copy(baseWhiteColor);
+  collarMat.emissive.copy(blackZeroColor);
+  collarMat.emissiveIntensity = 0;
+
+  goldMat.color.copy(baseGoldColor);
+  goldMat.emissive.copy(blackZeroColor);
+  goldMat.emissiveIntensity = 0;
+
+  woodMat.color.copy(baseWoodColor);
+  woodMat.emissive.copy(blackZeroColor);
+  woodMat.emissiveIntensity = 0;
+
+  if (tailMatRef) {
+    tailMatRef.color.copy(baseWhiteColor);
+    tailMatRef.emissive.copy(blackZeroColor);
+    tailMatRef.emissiveIntensity = 0;
+  }
+
+  evoGroup.visible = false;
+  evoAuraOuterMat.opacity = 0;
+  evoAuraInnerMat.opacity = 0;
+  evoPointLight.intensity = 0;
+  evoSparks.forEach(sp => { sp.mat.opacity = 0; });
+}
+
+function updateEvolutionVisuals(dt, simTime) {
+  const targetBlend = evoState === EVO_STATE_ACTIVE ? 1.0 : 0.0;
+  evoVisualBlend += (targetBlend - evoVisualBlend) * Math.min(1, dt * 8.0);
+
+  if (evoVisualBlend <= 0.004 && evoState === EVO_STATE_NORMAL) {
+    if (evoGroup.visible) restoreOriginalTigerMaterials();
+    return;
+  }
+
+  evoGroup.visible = true;
+
+  const cycleHue = (simTime * 0.22) % 1.0;
+  const secondaryHue = (cycleHue + 0.16) % 1.0;
+  const accentHue = (cycleHue + 0.42) % 1.0;
+
+  tempColor1.setHSL(cycleHue, 0.85, 0.86);
+  tempColor2.setHSL(cycleHue, 0.95, 0.52);
+  arcaBodyMat.color.copy(baseWhiteColor).lerp(tempColor1, evoVisualBlend * 0.72);
+  arcaBodyMat.emissive.copy(tempColor2);
+  arcaBodyMat.emissiveIntensity = 0.34 * evoVisualBlend;
+
+  tempColor1.setHSL(secondaryHue, 0.85, 0.88);
+  tempColor2.setHSL(secondaryHue, 0.95, 0.52);
+  arcaFaceMat.color.copy(baseWhiteColor).lerp(tempColor1, evoVisualBlend * 0.68);
+  arcaFaceMat.emissive.copy(tempColor2);
+  arcaFaceMat.emissiveIntensity = 0.32 * evoVisualBlend;
+
+  tempColor1.setHSL(secondaryHue, 0.82, 0.84);
+  ivory.color.copy(baseIvoryColor).lerp(tempColor1, evoVisualBlend * 0.72);
+  ivory.emissive.copy(tempColor2);
+  ivory.emissiveIntensity = 0.36 * evoVisualBlend;
+
+  if (tailMatRef) {
+    tailMatRef.color.copy(baseWhiteColor).lerp(tempColor1, evoVisualBlend * 0.72);
+    tailMatRef.emissive.copy(tempColor2);
+    tailMatRef.emissiveIntensity = 0.34 * evoVisualBlend;
+  }
+
+  tempColor3.setHSL(accentHue, 0.95, 0.58);
+  collarMat.emissive.copy(tempColor3);
+  collarMat.emissiveIntensity = 0.65 * evoVisualBlend;
+
+  goldMat.emissive.setHex(0xffe055);
+  goldMat.emissiveIntensity = 0.85 * evoVisualBlend;
+
+  woodMat.emissive.copy(tempColor2);
+  woodMat.emissiveIntensity = 0.48 * evoVisualBlend;
+
+  evoAuraOuterMat.color.copy(tempColor2);
+  evoAuraInnerMat.color.copy(tempColor3);
+  evoAuraOuterMat.opacity = (0.48 + 0.12 * Math.sin(simTime * 5.0)) * evoVisualBlend;
+  evoAuraInnerMat.opacity = (0.38 + 0.10 * Math.cos(simTime * 4.0)) * evoVisualBlend;
+  evoPointLight.color.copy(tempColor2);
+  evoPointLight.intensity = 1.45 * evoVisualBlend;
+
+  evoRing1.rotation.z = simTime * 1.8;
+  evoRing2.rotation.z = -simTime * 2.4;
+
+  evoSparks.forEach((sp, idx) => {
+    const angle = sp.phase + simTime * sp.speed;
+    const sparkHue = (cycleHue + sp.hueOffset) % 1.0;
+    sp.mat.color.setHSL(sparkHue, 1.0, 0.66);
+    sp.mat.opacity = 0.78 * evoVisualBlend;
+    sp.mesh.position.set(
+      sp.side * (0.72 + 0.12 * Math.sin(angle)),
+      0.28 + 0.18 * (0.5 + 0.5 * Math.cos(angle * 1.3)),
+      -0.20 + ((idx % 3) * 0.52) + 0.15 * Math.sin(angle)
+    );
+    sp.mesh.rotation.y = simTime * 3.5;
+    sp.mesh.rotation.x = simTime * 2.5;
+  });
+}
+
+function updateEnergyAndEvolutionHUD() {
+  energyEl.textContent = energy;
+  evoCountEl.textContent = `${energy} / ${EVO_THRESHOLD}`;
+
+  if (evoState === EVO_STATE_ACTIVE) {
+    evoPillEl.classList.add('active');
+    evoStatusEl.textContent = `EVOLUSI AKTIF (${Math.ceil(evoTimeLeft)}s)`;
+    evoFillEl.style.width = `${Math.max(0, (evoTimeLeft / EVO_DURATION) * 100)}%`;
+  } else {
+    evoPillEl.classList.remove('active');
+    evoStatusEl.textContent = 'ENERGI EVOLUSI';
+    evoFillEl.style.width = `${Math.min(100, (energy / EVO_THRESHOLD) * 100)}%`;
+  }
+}
+
+function activateEvolutionMode() {
+  if (evoState === EVO_STATE_ACTIVE) return;
+  evoState = EVO_STATE_ACTIVE;
+  evoTimeLeft = EVO_DURATION;
+
+  evoGroup.visible = true;
+  spawnPickupBurst(tiger.position.x, tiger.position.y + 0.65, tiger.position.z, 0x00f5d4, 3.4);
+  spawnPickupBurst(tiger.position.x, tiger.position.y + 0.65, tiger.position.z - 0.25, 0xf15bb5, 2.8);
+
+  updateEnergyAndEvolutionHUD();
+}
+
+function completeEvolutionMode() {
+  evoState = EVO_STATE_NORMAL;
+  evoTimeLeft = 0;
+
+  // Reset normal energy counter and Evolution progress bar to 0 exactly once when Evolution ends
+  energy = 0;
+  restoreOriginalTigerMaterials();
+  updateEnergyAndEvolutionHUD();
+}
+
+function clearPauseAndCountdownOverlays() {
+  paused = false;
+  resumeCountdown = 0;
+  pauseBtn.textContent = '❚❚';
+  const pInd = document.getElementById('pause-overlay');
+  if (pInd) pInd.remove();
+  if (countdownBadgeEl) countdownBadgeEl.style.display = 'none';
+}
+
+function start() {
+  clearPauseAndCountdownOverlays();
+
+  items.forEach(i => scene.remove(i.g));
+  items.length = 0;
+  pickupEffects.forEach(p => scene.remove(p.mesh));
+  pickupEffects.length = 0;
+
+  lane = 0;
+  targetLaneX = 0;
+  jump = 0;
+  slide = 0;
+  rollAngle = 0;
+  rollBlend = 0;
+  score = 0;
+
+  evoState = EVO_STATE_NORMAL;
+  energy = 0;
+  evoTimeLeft = 0;
+  evoVisualBlend = 0;
+
+  animTime = 0;
+  activePlayTime = 0;
+  speedStage = 0;
+  baseSpeed = INITIAL_BASE_SPEED;
+  speedMultiplier = 1.0;
+  speed = baseSpeed * WORLD_SPEED_SCALE;
+  windBoostTimer = 0;
+  windMat.opacity = 0;
+
+  spawn = 0.85;
+  fillerOrbSpawn = 1.1;
+  lastSpawnLane = 0;
+  ended = false;
+  running = true;
+
+  restoreOriginalTigerMaterials();
+  rocketPlumes.forEach(rp => { rp.plume.visible = false; });
+
+  tiger.position.set(0, 0.25, 2);
+  tiger.rotation.set(0, 0, 0);
+  tiger.scale.set(1, 1, 1);
+  tigerRollPivot.position.set(0, 0.72, 0);
+  tigerRollPivot.rotation.set(0, 0, 0);
+  tigerRollPivot.scale.set(1, 1, 1);
+  head.position.set(0, 1.04, -1.10);
+  head.rotation.set(0, 0, 0);
+  head.scale.set(1, 1, 1);
+  tail.position.set(0, 0.92, 0.90);
+  tail.rotation.set(0, 0, 0);
+  tail.scale.set(1, 1, 1);
+  legs.forEach((l, i) => {
+    const [lx, lz] = legCoords[i];
+    l.position.set(lx, 0.58, lz);
+    l.rotation.set(0, 0, 0);
+  });
+
+  camera.position.set(0, 5.0, 10.8);
+  camera.lookAt(0, 1.1, -3);
+
+  seedInitialEnergyRoutes();
+
+  last = performance.now();
+  overlay.style.display = 'none';
+  scoreEl.textContent = '0';
+  updateEnergyAndEvolutionHUD();
+}
+
+function end() {
+  clearPauseAndCountdownOverlays();
+  running = false;
+  ended = true;
+  restoreOriginalTigerMaterials();
+  rocketPlumes.forEach(rp => { rp.plume.visible = false; });
+  windMat.opacity = 0;
+  overlay.innerHTML = `<div class="panel"><div class="eyebrow"><span class="dot"></span> LARIAN TAMAT</div><h1>RUN<br><span class="accent">ENDED</span></h1><p>Skor Akhir: <b class="accent">${Math.floor(score)}</b><br>Tenaga Dikumpul: <b class="cyan-text">${energy} / ${EVO_THRESHOLD}</b></p><button id="start">CUBA LAGI</button><div class="small">BEYOND NATURE &nbsp;·&nbsp; FUTURE TIGER RUNNER</div></div>`;
+  overlay.style.display = 'flex';
+  document.querySelector('#start').addEventListener('click', start);
+}
+
+function isGameplayInputAllowed() {
+  return running && !paused && resumeCountdown <= 0;
+}
+
+function move(d) {
+  if (!isGameplayInputAllowed()) return;
+  lane = Math.max(-1, Math.min(1, lane + d));
+  targetLaneX = lane * 2.15;
+}
+
+function doJump() {
+  if (!isGameplayInputAllowed()) return;
+  if (jump <= 0) {
+    slide = 0;
+    jump = JUMP_DURATION;
+  }
+}
+
+function doSlide() {
+  if (!isGameplayInputAllowed()) return;
+  if (jump > 0) jump = 0;
+  slide = SLIDE_DURATION;
+}
+
+function beginResumeCountdown() {
+  const pInd = document.getElementById('pause-overlay');
+  if (pInd) pInd.remove();
+  paused = false;
+  resumeCountdown = 3.45;
+  pauseBtn.textContent = '❚❚';
+  countdownBadgeEl.style.display = 'flex';
+  countdownNumEl.textContent = '3';
+  countdownSubEl.textContent = 'SEDIA BERLARI';
+  last = performance.now();
+}
+
+function togglePause() {
+  if (!running || ended) return;
+
+  if (!paused) {
+    paused = true;
+    resumeCountdown = 0;
+    if (countdownBadgeEl) countdownBadgeEl.style.display = 'none';
+    pauseBtn.textContent = '▶';
+
+    let pIndicator = document.getElementById('pause-overlay');
+    if (!pIndicator) {
+      pIndicator = document.createElement('div');
+      pIndicator.id = 'pause-overlay';
+      pIndicator.style.cssText = 'position:absolute;inset:0;background:rgba(6,18,15,0.62);display:flex;align-items:center;justify-content:center;text-align:center;color:#f7fffc;z-index:99;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:auto;cursor:pointer;padding:24px;';
+      pIndicator.innerHTML = `<div class="panel" style="max-width:310px"><div class="eyebrow"><span class="dot"></span> JEDA</div><h1>PAUSED</h1><p>Permainan dihentikan sementara.</p><button type="button" style="margin-top:10px;border:0;border-radius:14px;padding:14px 20px;background:linear-gradient(135deg,#ffe885,#d8ae2e);color:#0e1c16;font-weight:900;font-size:14px;width:100%;cursor:pointer;letter-spacing:.08em">SAMBUNG BERLARI</button></div>`;
+      document.body.appendChild(pIndicator);
+      pIndicator.addEventListener('click', e => {
+        e.stopPropagation();
+        beginResumeCountdown();
+      });
+    }
+  } else {
+    beginResumeCountdown();
+  }
+}
+
+pauseBtn.addEventListener('click', e => { e.stopPropagation(); togglePause(); });
+document.querySelector('#start').addEventListener('click', start);
+document.querySelector('#left').onclick = () => move(-1);
+document.querySelector('#right').onclick = () => move(1);
+document.querySelector('#jump').onclick = doJump;
+document.querySelector('#slide').onclick = doSlide;
+
+let touchX = 0, touchY = 0;
+renderer.domElement.addEventListener('touchstart', e => {
+  touchX = e.changedTouches[0].clientX;
+  touchY = e.changedTouches[0].clientY;
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchend', e => {
+  if (!isGameplayInputAllowed()) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  const dy = e.changedTouches[0].clientY - touchY;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 25) return;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
+  else if (dy < 0) doJump();
+  else doSlide();
+}, { passive: true });
+
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') move(-1);
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') move(1);
+  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') doJump();
+  if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') doSlide();
+  if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') togglePause();
+});
+
+let last = performance.now();
+function animate(now) {
+  requestAnimationFrame(animate);
+  const rawDt = Math.min((now - last) / 1000, 0.04);
+  last = now;
+
+  // PAUSE COMPLETELY FREEZES THE GAME
+  if (paused) {
+    renderer.render(scene, camera);
+    return;
+  }
+
+  // THREE-SECOND RESUME COUNTDOWN (3 -> 2 -> 1 -> GO) WHILE GAMEPLAY REMAINS FROZEN
+  if (running && resumeCountdown > 0) {
+    resumeCountdown = Math.max(0, resumeCountdown - rawDt);
+    if (resumeCountdown > 2.45) {
+      countdownNumEl.textContent = '3';
+      countdownSubEl.textContent = 'SEDIA BERLARI';
+    } else if (resumeCountdown > 1.45) {
+      countdownNumEl.textContent = '2';
+      countdownSubEl.textContent = 'SEDIA BERLARI';
+    } else if (resumeCountdown > 0.45) {
+      countdownNumEl.textContent = '1';
+      countdownSubEl.textContent = 'SEDIA BERLARI';
+    } else if (resumeCountdown > 0) {
+      countdownNumEl.textContent = 'GO';
+      countdownSubEl.textContent = 'TERUSKAN LARIAN';
+    } else {
+      countdownBadgeEl.style.display = 'none';
+    }
+    renderer.render(scene, camera);
+    return;
+  }
+
+  const dt = rawDt;
+
+  if (running) {
+    animTime += dt;
+
+    // Verified 0.35 Base Speed & +25% Multiplicative Progression every 50s of active gameplay
+    activePlayTime += dt;
+    const targetStage = Math.floor(activePlayTime / SPEED_STEP_INTERVAL);
+    if (targetStage > speedStage) {
+      speedStage = targetStage;
+      baseSpeed = INITIAL_BASE_SPEED * Math.pow(1.25, speedStage);
+      speedMultiplier = baseSpeed / INITIAL_BASE_SPEED;
+      windBoostTimer = 2.6;
+    }
+    speed = baseSpeed * WORLD_SPEED_SCALE;
+
+    score += dt * speed * 0.65;
+    spawn -= dt;
+    fillerOrbSpawn -= dt;
+
+    if (windBoostTimer > 0) {
+      windBoostTimer = Math.max(0, windBoostTimer - dt);
+      windMat.opacity = Math.sin((windBoostTimer / 2.6) * Math.PI) * 0.38;
+      for (const w of windStreaks) {
+        w.position.z += speed * dt * 1.9;
+        if (w.position.z > 12) w.position.z -= 75;
+      }
+    } else {
+      windMat.opacity = 0;
+    }
+
+    // Controlled 10s Evolution Timer & Visual Update
+    if (evoState === EVO_STATE_ACTIVE) {
+      evoTimeLeft -= dt;
+      if (evoTimeLeft <= 0) {
+        completeEvolutionMode();
+      } else {
+        updateEnergyAndEvolutionHUD();
+      }
+    }
+    updateEvolutionVisuals(dt, animTime);
+
+    roadTex.offset.y -= speed * dt * 0.095;
+
+    if (spawn <= 0) {
+      spawnCoordinatedWave(-74, activePlayTime, speedMultiplier);
+      const minGap = Math.max(0.58, 1.15 / Math.pow(speedMultiplier, 0.62));
+      spawn = minGap + Math.random() * 0.34;
+    }
+
+    if (fillerOrbSpawn <= 0) {
+      const clearLanes = [-1, 0, 1].filter(l => isLaneClearAtZ(l, -66, 9.5));
+      if (clearLanes.length) {
+        const spacing = 2.25 * Math.min(1.3, Math.pow(speedMultiplier, 0.4));
+        if (clearLanes.length >= 2 && Math.random() < 0.45) {
+          const l1 = clearLanes[0];
+          const l2 = clearLanes[1];
+          const mid = (l1 + l2 === 0) ? 0 : l2;
+          const seq = [l1, l1, mid, l2];
+          for (let i = 0; i < seq.length; i++) {
+            spawnSafeOrb(seq[i], -62 - i * spacing, 0.92);
+          }
+        } else {
+          const ln = clearLanes[Math.floor(Math.random() * clearLanes.length)];
+          const lengths = [1, 2, 4, 5];
+          const len = lengths[Math.floor(Math.random() * lengths.length)];
+          for (let i = 0; i < len; i++) {
+            spawnSafeOrb(ln, -62 - i * spacing, 0.92);
+          }
+        }
+      }
+      fillerOrbSpawn = Math.max(0.72, 1.25 / Math.pow(speedMultiplier, 0.5)) + Math.random() * 0.55;
+    }
+
+    tiger.position.x += (targetLaneX - tiger.position.x) * Math.min(1, dt * 14);
+
+    jump = Math.max(0, jump - dt);
+    slide = Math.max(0, slide - dt);
+    const jumpProgress = jump > 0 ? (JUMP_DURATION - jump) / JUMP_DURATION : 0;
+    const jumpOffset = jump > 0 ? Math.sin(jumpProgress * Math.PI) * JUMP_HEIGHT : 0;
+
+    const runBounce = (jump <= 0 && slide <= 0) ? Math.abs(Math.sin(animTime * 18)) * 0.045 : 0;
+    tiger.position.y = 0.25 + jumpOffset + runBounce;
+
+    // Original Arca Tiger Rolling-Ball Animation
+    const targetRollBlend = slide > 0 ? 1.0 : 0.0;
+    rollBlend += (targetRollBlend - rollBlend) * Math.min(1, dt * 16);
+
+    if (rollBlend > 0.005) {
+      tigerRollPivot.position.y = 0.72 - rollBlend * 0.25;
+      tigerRollPivot.scale.set(
+        1.0 + rollBlend * 0.08,
+        1.0 - rollBlend * 0.14,
+        1.0 - rollBlend * 0.40
+      );
+
+      if (slide > 0) {
+        rollAngle -= dt * (15.5 * Math.pow(speedMultiplier, 0.65));
+      } else {
+        const twoPi = Math.PI * 2;
+        rollAngle = rollAngle % twoPi;
+        if (rollAngle < -Math.PI) rollAngle += twoPi;
+        rollAngle *= (1 - Math.min(1, dt * 18));
+      }
+      tigerRollPivot.rotation.x = rollAngle * rollBlend;
+
+      head.position.set(0, 1.04 - rollBlend * 0.28, -1.10 + rollBlend * 0.36);
+      head.rotation.set(-rollBlend * 0.62, 0, 0);
+      head.scale.setScalar(1.0 - rollBlend * 0.12);
+
+      tail.position.set(0, 0.92 - rollBlend * 0.22, 0.90 - rollBlend * 0.26);
+      tail.rotation.set(rollBlend * 0.95, 0, 0);
+      tail.scale.setScalar(1.0 - rollBlend * 0.15);
+
+      legs.forEach((l, i) => {
+        const isFront = i < 2;
+        const side = i % 2 === 0 ? -1 : 1;
+        l.position.set(
+          side * (0.36 + rollBlend * 0.04),
+          0.58 + rollBlend * 0.14,
+          (isFront ? -0.54 : 0.66) * (1.0 - rollBlend * 0.25)
+        );
+        l.rotation.set(isFront ? rollBlend * 1.12 : -rollBlend * 1.12, 0, 0);
+      });
+    } else {
+      rollAngle = 0;
+      tigerRollPivot.position.y = 0.72;
+      tigerRollPivot.scale.set(1, jump > 0 ? 1.05 : 1, 1);
+      tigerRollPivot.rotation.x = 0;
+
+      head.position.set(0, 1.04 + Math.sin(animTime * 18) * 0.02, -1.10);
+      head.rotation.set(jump > 0 ? -0.12 : 0, 0, 0);
+      head.scale.setScalar(1);
+
+      tail.position.set(0, 0.92, 0.90);
+      tail.rotation.set(Math.sin(animTime * 6) * 0.09, 0, Math.sin(animTime * 8) * 0.11);
+      tail.scale.setScalar(1);
+
+      legs.forEach((l, i) => {
+        const [lx, lz] = legCoords[i];
+        l.position.set(lx, 0.58, lz);
+        if (jump > 0) {
+          l.rotation.set(i < 2 ? -0.18 : 0.18, 0, 0);
+        } else {
+          const gaitFreq = 14 + Math.min(12, speed * 0.32);
+          l.rotation.set(Math.sin(animTime * gaitFreq + (i % 2) * Math.PI + (i > 1 ? Math.PI * 0.5 : 0)) * 0.65, 0, 0);
+        }
+      });
+    }
+
+    // Rocket Thrusters During Jumping
+    const showRockets = jump > 0 && slide <= 0;
+    rocketPlumes.forEach((rp, idx) => {
+      rp.plume.visible = showRockets;
+      if (showRockets) {
+        const pulse = 0.82 + 0.32 * Math.sin(animTime * 45 + idx * 1.3);
+        const thrustEnvelope = Math.sin(jumpProgress * Math.PI);
+        const scaleY = Math.max(0.35, thrustEnvelope * pulse * 1.15);
+        rp.outerCone.scale.set(1, scaleY, 1);
+        rp.innerCone.scale.set(1, scaleY * 0.95, 1);
+        rp.thrustRing.scale.setScalar(0.85 + 0.25 * Math.sin(animTime * 30 + idx));
+        rp.sparks.forEach((sp, sIdx) => {
+          const travel = ((animTime * 8 + sIdx * 0.5) % 1.0);
+          sp.position.y = -0.12 - travel * 0.42;
+          sp.scale.setScalar(1.0 - travel * 0.65);
+        });
+      }
+    });
+
+    for (let i = pickupEffects.length - 1; i >= 0; i--) {
+      const pe = pickupEffects[i];
+      pe.life -= dt;
+      pe.mesh.position.z += speed * dt;
+      const prog = 1 - pe.life / pe.maxLife;
+      pe.mesh.scale.setScalar(1 + prog * pe.maxScale);
+      pe.mesh.material.opacity = (1 - prog) * 0.88;
+      if (pe.life <= 0) {
+        scene.remove(pe.mesh);
+        pickupEffects.splice(i, 1);
+      }
+    }
+
+    for (const d of dashes) {
+      d.position.z += speed * dt;
+      if (d.position.z > 14) d.position.z -= 126.5;
+    }
+    for (const t of trees) {
+      t.position.z += speed * dt * 0.82;
+      if (t.position.z > 16) t.position.z -= 118;
+    }
+
+    const tigerCenterY = slide > 0 ? 0.55 : (0.95 + jumpOffset);
+
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      it.g.position.z += speed * dt;
+      if (it.type === 'orb') it.g.rotation.y += dt * 2.6;
+
+      const dz = Math.abs(it.g.position.z - tiger.position.z);
+      const dx = Math.abs(it.g.position.x - tiger.position.x);
+
+      if (dz < 0.82 && dx < 0.84 && !it.hit) {
+        if (it.type === 'orb') {
+          const orbWorldY = it.g.position.y + 0.35;
+          const dy = Math.abs(orbWorldY - tigerCenterY);
+          if (dy > 1.02) continue;
+
+          it.hit = true;
+          spawnPickupBurst(it.g.position.x, orbWorldY, it.g.position.z);
+          scene.remove(it.g);
+          items.splice(i, 1);
+
+          // Independent +1 Energy Collection:
+          // - Always adds +1 to `energy` and updates HUD.
+          // - Triggers Evolution Mode once when reaching 1000 in NORMAL state.
+          // - Continues adding +1 during EVOLUTION_ACTIVE without re-triggering or resetting `evoTimeLeft`.
+          energy += ENERGY_GAIN;
+          if (evoState === EVO_STATE_NORMAL && energy >= EVO_THRESHOLD) {
+            activateEvolutionMode();
+          } else {
+            updateEnergyAndEvolutionHUD();
+          }
+          continue;
+        }
+
+        // Complete obstacle immunity across all obstacle types ('low', 'high', 'gate') while Evolution Mode is active
+        const safe = (evoState === EVO_STATE_ACTIVE) ||
+                     (it.type === 'low' && jumpOffset > 0.42) ||
+                     ((it.type === 'high' || it.type === 'gate') && slide > 0 && jumpOffset < 0.25);
+        if (!safe) {
+          end();
+          break;
+        } else {
+          it.hit = true;
+        }
+      }
+      if (it.g.position.z > 13) {
+        scene.remove(it.g);
+        items.splice(i, 1);
+      }
+    }
+    scoreEl.textContent = Math.floor(score);
+
+    camera.position.x += (tiger.position.x * 0.22 - camera.position.x) * dt * 2;
+    camera.lookAt(tiger.position.x * 0.18, 1.1, -3);
+
+    for (const l of laneLights) {
+      l.position.z += speed * dt;
+      if (l.position.z > 14) l.position.z -= 119;
+    }
+
+    const lateralDelta = targetLaneX - tiger.position.x;
+    tiger.rotation.z += (lateralDelta * -0.055 - tiger.rotation.z) * Math.min(1, dt * 10);
+    tiger.rotation.y += (lateralDelta * 0.045 - tiger.rotation.y) * Math.min(1, dt * 8);
+  }
+
+  renderer.render(scene, camera);
+}
+
 requestAnimationFrame(animate);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7))});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+});
 </script>
 </body>
 </html>
