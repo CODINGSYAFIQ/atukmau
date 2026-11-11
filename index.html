@@ -646,12 +646,13 @@ scene.background = new THREE.Color(0x88b8a8);
 scene.fog = new THREE.FogExp2(0x84b5a5, 0.0105);
 
 const camera = new THREE.PerspectiveCamera(56, innerWidth / innerHeight, 0.1, 190);
-// Front Three-Quarter Showcase View for Lobby:
-// The Arca Tiger sits at z = 2.0 with its head at z = 0.90 facing negative Z (-Z).
-// Placing the Lobby camera at (1.55, 1.52, -1.25) looking at (-0.05, 0.88, 1.72)
-// frames the tiger's face, both eyes/ears, wooden whiskers, collar, and front-right flank clearly.
-const LOBBY_CAM_POS = new THREE.Vector3(1.55, 1.52, -1.25);
-const LOBBY_CAM_LOOK = new THREE.Vector3(-0.05, 0.88, 1.72);
+// Balanced Front Three-Quarter Showcase View for Lobby:
+// The Arca Tiger sits at z = 2.0 (head at z ≈ 0.90 facing -Z, tail at z ≈ 3.20, total height ≈ 2.15 units).
+// Pulling the camera back to (2.45, 2.05, -2.55) looking at (0.05, 0.86, 1.92) maintains the front 3/4
+// angle while framing the entire tiger (face, body, all 4 legs, and raised striped tail) at ~52% of the
+// middle showcase area with generous breathing room above the RUN button and below the top HUD.
+const LOBBY_CAM_POS = new THREE.Vector3(2.45, 2.05, -2.55);
+const LOBBY_CAM_LOOK = new THREE.Vector3(0.05, 0.86, 1.92);
 const GAME_CAM_POS = new THREE.Vector3(0.0, 5.0, 10.8);
 const GAME_CAM_LOOK = new THREE.Vector3(0.0, 1.1, -3.0);
 
