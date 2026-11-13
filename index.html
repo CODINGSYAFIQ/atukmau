@@ -2272,6 +2272,47 @@ function saveSettings() {
 
 let userSettings = loadSettings();
 
+let atukmaoAudioContext = null;
+function getATUKMAOAudioContext() {
+  if (!userSettings.soundEffects && !userSettings.backgroundMusic) return null;
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtor) return null;
+  if (!atukmaoAudioContext) atukmaoAudioContext = new AudioCtor();
+  if (atukmaoAudioContext.state === 'suspended') atukmaoAudioContext.resume().catch(() => {});
+  return atukmaoAudioContext;
+}
+function playATUKMAOSound(kind) {
+  if (!userSettings.soundEffects) return;
+  const ctx = getATUKMAOAudioContext();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  const presets = {
+    jump: [520, 760, 0.11, 'sine'],
+    roll: [190, 105, 0.16, 'triangle'],
+    coin: [880, 1320, 0.10, 'sine'],
+    skill: [420, 1040, 0.24, 'triangle'],
+    evolution: [180, 920, 0.52, 'sawtooth'],
+    death: [260, 70, 0.42, 'sawtooth']
+  };
+  const p = presets[kind];
+  if (!p) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = p[3];
+  osc.frequency.setValueAtTime(p[0], now);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(35, p[1]), now + p[2]);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(kind === 'coin' ? 0.075 : 0.055, now + 0.012);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + p[2] + 0.04);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + p[2] + 0.05);
+}
+function triggerATUKMAOVibration(kind) {
+  if (!userSettings.vibration || typeof navigator === 'undefined' || typeof navigator.vibrate !== 'function') return;
+  try { navigator.vibrate(kind === 'death' ? [100, 55, 180] : 70); } catch (e) {}
+}
+
+
 // ============================================================================
 // 11. GAMEPLAY STATE, CAMERA TRANSITIONS & EVOLUTION / SKILL CONSTANTS
 // ============================================================================
@@ -2471,6 +2512,8 @@ function activateCollectedSkill(skillKey) {
   savePlayerData();
   updateMissionsNavBadge();
   updateActiveSkillsHUD();
+  playATUKMAOSound('skill');
+  triggerATUKMAOVibration('skill');
 }
 
 function collectEnergyParticle() {
@@ -2486,6 +2529,7 @@ function collectEnergyParticle() {
   savePlayerData();
   updateCoinHUD();
   updateMissionsNavBadge();
+  playATUKMAOSound('coin');
 
   evoProgress += ENERGY_GAIN;
   if (evoState === EVO_STATE_NORMAL && evoProgress >= EVO_THRESHOLD) {
@@ -2658,6 +2702,7 @@ function updateEvolutionVisuals(simTime, blend) {
 function activateEvolutionMode() {
   if (evoState === EVO_STATE_ACTIVE) return;
   evoState = EVO_STATE_ACTIVE;
+  playATUKMAOSound('evolution');
   evoTimeLeft = EVO_DURATION;
   evoVisualBlend = 1.0;
   playerData.stats.totalEvolutionActivations = (playerData.stats.totalEvolutionActivations || 0) + 1;
@@ -3121,6 +3166,8 @@ function reviveWithPhoenixCore() {
 }
 
 function end() {
+  playATUKMAOSound('death');
+  triggerATUKMAOVibration('death');
   clearPauseAndCountdownOverlays();
   rocketPlumes.forEach(p => { p.group.visible = false; });
   rocketDashShield.visible = false;
@@ -3225,6 +3272,7 @@ function doJump() {
   if (jump <= 0) {
     slide = 0;
     jump = JUMP_DURATION;
+    playATUKMAOSound('jump');
   }
 }
 
@@ -3232,6 +3280,7 @@ function doSlide() {
   if (!isGameplayInputAllowed()) return;
   if (jump > 0) jump = 0;
   slide = SLIDE_DURATION;
+  playATUKMAOSound('roll');
 }
 
 pauseBtn.addEventListener('click', e => {
@@ -3255,6 +3304,8 @@ settingsCloseBtn.addEventListener('click', e => { e.stopPropagation(); closeShar
 toggleSoundBtn.addEventListener('click', e => {
   e.stopPropagation();
   userSettings.soundEffects = !userSettings.soundEffects;
+  if (userSettings.soundEffects) getATUKMAOAudioContext();
+  if (!userSettings.soundEffects && atukmaoAudioContext && atukmaoAudioContext.state === 'running') atukmaoAudioContext.suspend().catch(() => {});
   saveSettings();
   syncSettingsToggleButtons();
 });
@@ -3269,6 +3320,7 @@ toggleMusicBtn.addEventListener('click', e => {
 toggleVibBtn.addEventListener('click', e => {
   e.stopPropagation();
   userSettings.vibration = !userSettings.vibration;
+  if (!userSettings.vibration && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') navigator.vibrate(0);
   saveSettings();
   syncSettingsToggleButtons();
 });
