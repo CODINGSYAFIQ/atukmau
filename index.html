@@ -2311,7 +2311,18 @@ function updateATUKMAOBGM(now, force = false) {
   }
   const desired = getATUKMAODesiredBGM();
   if (!atukmaoBGMUnlocked) return;
-  if (desired !== atukmaoBGMCurrent && desired !== atukmaoBGMNext) {
+  if (desired === atukmaoBGMCurrent && atukmaoBGMNext) {
+    atukmaoBGM[atukmaoBGMNext].pause();
+    atukmaoBGM[atukmaoBGMNext].currentTime = 0;
+    atukmaoBGM[atukmaoBGMNext].volume = 0;
+    atukmaoBGMNext = null;
+    atukmaoBGM[atukmaoBGMCurrent].volume = 0.34;
+  } else if (desired !== atukmaoBGMCurrent && desired !== atukmaoBGMNext) {
+    if (atukmaoBGMNext) {
+      atukmaoBGM[atukmaoBGMNext].pause();
+      atukmaoBGM[atukmaoBGMNext].currentTime = 0;
+      atukmaoBGM[atukmaoBGMNext].volume = 0;
+    }
     atukmaoBGMNext = desired;
     atukmaoBGMFadeStarted = now;
     const nextAudio = atukmaoBGM[desired];
