@@ -3563,14 +3563,39 @@ renderer.domElement.addEventListener('touchend', e => {
 }, { passive: true });
 
 addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') move(-1);
-  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') move(1);
-  if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') doJump();
-  if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') doSlide();
+  // Preserve native typing and focused-control behavior; game shortcuts should
+  // never hijack text entry or activate while a UI control has keyboard focus.
+  const target = e.target;
+  const isEditableTarget = target instanceof HTMLElement && (
+    target.isContentEditable ||
+    /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)
+  );
+  const isInteractiveTarget = target instanceof HTMLElement && (
+    /^(BUTTON|A)$/.test(target.tagName) ||
+    target.closest('button, a, [role="button"], input, textarea, select, [contenteditable="true"]')
+  );
+  if (isEditableTarget || isInteractiveTarget) return;
+
+  const leftKey = e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A';
+  const rightKey = e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D';
+  const jumpKey = e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ';
+  const slideKey = e.key === 'ArrowDown' || e.key === 's' || e.key === 'S';
+
+  if (isGameplayInputAllowed() && (leftKey || rightKey || jumpKey || slideKey)) {
+    // Stop arrow/space keys from scrolling the page while actively playing.
+    e.preventDefault();
+    if (leftKey) move(-1);
+    else if (rightKey) move(1);
+    else if (jumpKey) doJump();
+    else if (slideKey) doSlide();
+    return;
+  }
+
   if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
     if (settingsModal.style.display === 'flex') {
       closeSharedSettings();
     } else if (sceneState === SCENE_RUNNING && running && !ended) {
+      e.preventDefault();
       if (paused) beginResumeCountdown();
       else openPauseMenu();
     }
