@@ -2015,73 +2015,109 @@ function defaultPlayerData() {
 
 function loadPlayerData() {
   const base = defaultPlayerData();
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const raw = window.localStorage.getItem(PLAYER_DATA_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed === 'object') {
-          if (Number.isFinite(parsed.totalEnergyCoin) && parsed.totalEnergyCoin >= 0) {
-            base.totalEnergyCoin = Math.floor(parsed.totalEnergyCoin);
-          }
-          base.legacyMigrated = Boolean(parsed.legacyMigrated);
-          if (parsed.skillUpgrades && typeof parsed.skillUpgrades === 'object') {
-            base.skillUpgrades.magnet = Math.max(0, Math.min(10, Math.floor(parsed.skillUpgrades.magnet || 0)));
-            base.skillUpgrades.rocket = Math.max(0, Math.min(10, Math.floor(parsed.skillUpgrades.rocket || 0)));
-            base.skillUpgrades.x2 = Math.max(0, Math.min(10, Math.floor(parsed.skillUpgrades.x2 || 0)));
-          }
-          if (Array.isArray(parsed.ownedDecorations)) base.ownedDecorations = parsed.ownedDecorations;
-          if (parsed.equippedDecorations && typeof parsed.equippedDecorations === 'object') {
-            base.equippedDecorations = { ...base.equippedDecorations, ...parsed.equippedDecorations };
-          }
-          if (Number.isFinite(parsed.phoenixCoreInventory) && parsed.phoenixCoreInventory >= 0) {
-            base.phoenixCoreInventory = Math.floor(parsed.phoenixCoreInventory);
-          }
-          if (parsed.dailyReward && typeof parsed.dailyReward === 'object') {
-            base.dailyReward = {
-              lastClaimDate: typeof parsed.dailyReward.lastClaimDate === 'string' ? parsed.dailyReward.lastClaimDate : null,
-              streakDay: Math.max(1, Math.min(7, Math.floor(parsed.dailyReward.streakDay || 1)))
-            };
-          }
-          if (parsed.missions && typeof parsed.missions === 'object') {
-            base.missions = {
-              dailyDate: typeof parsed.missions.dailyDate === 'string' ? parsed.missions.dailyDate : null,
-              progress: (parsed.missions.progress && typeof parsed.missions.progress === 'object') ? { ...parsed.missions.progress } : {},
-              claimedIds: Array.isArray(parsed.missions.claimedIds) ? [...parsed.missions.claimedIds] : []
-            };
-          }
-          if (parsed.stats && typeof parsed.stats === 'object') {
-            base.stats = {
-              ...base.stats,
-              ...parsed.stats,
-              lifetimeGameplayCoins: Number.isFinite(parsed.stats.lifetimeGameplayCoins) && parsed.stats.lifetimeGameplayCoins >= 0
-                ? Math.floor(parsed.stats.lifetimeGameplayCoins)
-                : base.totalEnergyCoin
-            };
-          } else {
-            base.stats.lifetimeGameplayCoins = base.totalEnergyCoin;
-          }
-        }
-      }
+  if (typeof window === 'undefined' || !window.localStorage) return base;
 
-      if (!base.legacyMigrated) {
-        const legacyRaw = window.localStorage.getItem(LEGACY_ENERGY_KEY);
-        const legacyVal = legacyRaw !== null ? Number(legacyRaw) : 0;
-        if (Number.isSafeInteger(legacyVal) && legacyVal > 0) {
-          base.totalEnergyCoin = Math.max(base.totalEnergyCoin, legacyVal);
-          base.stats.lifetimeGameplayCoins = Math.max(base.stats.lifetimeGameplayCoins, base.totalEnergyCoin);
+  let parsed = null;
+  let hasValidPrimarySave = false;
+
+  // Read the main save independently so a malformed JSON file cannot skip
+  // legacy coin recovery or prevent the rest of the game from loading.
+  try {
+    const raw = window.localStorage.getItem(PLAYER_DATA_KEY);
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+        hasValidPrimarySave = !!parsed && typeof parsed === 'object' && !Array.isArray(parsed);
+      } catch (parseError) {
+        // Preserve the damaged payload for manual recovery before any migration.
+        try {
+          const backupKey = PLAYER_DATA_KEY + '_corrupt_backup';
+          if (!window.localStorage.getItem(backupKey)) {
+            window.localStorage.setItem(backupKey, raw);
+          }
+        } catch (backupError) {
+          // Storage may be full or unavailable; continue with in-memory recovery.
         }
-        base.legacyMigrated = true;
-        window.localStorage.setItem(PLAYER_DATA_KEY, JSON.stringify(base));
-        window.localStorage.setItem(LEGACY_ENERGY_KEY, String(base.totalEnergyCoin));
       }
     }
-  } catch (e) {
-    // Fallback to in-memory default
+  } catch (storageReadError) {
+    return base;
   }
+
+  if (hasValidPrimarySave) {
+    if (Number.isSafeInteger(parsed.totalEnergyCoin) && parsed.totalEnergyCoin >= 0) {
+      base.totalEnergyCoin = parsed.totalEnergyCoin;
+    }
+    base.legacyMigrated = parsed.legacyMigrated === true;
+
+    if (parsed.skillUpgrades && typeof parsed.skillUpgrades === 'object') {
+      for (const key of ['magnet', 'rocket', 'x2']) {
+        const value = parsed.skillUpgrades[key];
+        if (Number.isFinite(value) && value >= 0) {
+          base.skillUpgrades[key] = Math.max(0, Math.min(SKILL_MAX_LEVEL, Math.floor(value)));
+        }
+      }
+    }
+    if (Array.isArray(parsed.ownedDecorations)) {
+      base.ownedDecorations = [...new Set(parsed.ownedDecorations.filter(v => typeof v === 'string'))];
+      if (!base.ownedDecorations.includes('default_collar')) base.ownedDecorations.unshift('default_collar');
+    }
+    if (parsed.equippedDecorations && typeof parsed.equippedDecorations === 'object' && !Array.isArray(parsed.equippedDecorations)) {
+      base.equippedDecorations = { ...base.equippedDecorations, ...parsed.equippedDecorations };
+    }
+    if (Number.isSafeInteger(parsed.phoenixCoreInventory) && parsed.phoenixCoreInventory >= 0) {
+      base.phoenixCoreInventory = parsed.phoenixCoreInventory;
+    }
+    if (parsed.dailyReward && typeof parsed.dailyReward === 'object') {
+      base.dailyReward = {
+        lastClaimDate: typeof parsed.dailyReward.lastClaimDate === 'string' ? parsed.dailyReward.lastClaimDate : null,
+        streakDay: Number.isFinite(parsed.dailyReward.streakDay)
+          ? Math.max(1, Math.min(7, Math.floor(parsed.dailyReward.streakDay)))
+          : 1
+      };
+    }
+    if (parsed.missions && typeof parsed.missions === 'object') {
+      base.missions = {
+        dailyDate: typeof parsed.missions.dailyDate === 'string' ? parsed.missions.dailyDate : null,
+        progress: (parsed.missions.progress && typeof parsed.missions.progress === 'object' && !Array.isArray(parsed.missions.progress))
+          ? { ...parsed.missions.progress } : {},
+        claimedIds: Array.isArray(parsed.missions.claimedIds)
+          ? [...new Set(parsed.missions.claimedIds.filter(v => typeof v === 'string'))] : []
+      };
+    }
+    if (parsed.stats && typeof parsed.stats === 'object') {
+      const stats = parsed.stats;
+      base.stats = {
+        totalRuns: Number.isSafeInteger(stats.totalRuns) && stats.totalRuns >= 0 ? stats.totalRuns : 0,
+        totalEvolutionActivations: Number.isSafeInteger(stats.totalEvolutionActivations) && stats.totalEvolutionActivations >= 0 ? stats.totalEvolutionActivations : 0,
+        bestScore: Number.isFinite(stats.bestScore) && stats.bestScore >= 0 ? stats.bestScore : 0,
+        lifetimeGameplayCoins: Number.isSafeInteger(stats.lifetimeGameplayCoins) && stats.lifetimeGameplayCoins >= 0
+          ? stats.lifetimeGameplayCoins : base.totalEnergyCoin
+      };
+    } else {
+      base.stats.lifetimeGameplayCoins = base.totalEnergyCoin;
+    }
+  }
+
+  // Recover the legacy balance even when the primary save is absent or damaged.
+  if (!base.legacyMigrated) {
+    try {
+      const legacyRaw = window.localStorage.getItem(LEGACY_ENERGY_KEY);
+      const legacyVal = legacyRaw !== null ? Number(legacyRaw) : 0;
+      if (Number.isSafeInteger(legacyVal) && legacyVal > 0) {
+        base.totalEnergyCoin = Math.max(base.totalEnergyCoin, legacyVal);
+        base.stats.lifetimeGameplayCoins = Math.max(base.stats.lifetimeGameplayCoins, base.totalEnergyCoin);
+      }
+      base.legacyMigrated = true;
+      window.localStorage.setItem(PLAYER_DATA_KEY, JSON.stringify(base));
+      window.localStorage.setItem(LEGACY_ENERGY_KEY, String(base.totalEnergyCoin));
+    } catch (migrationError) {
+      // Keep recovered data in memory; a later successful save can persist it.
+    }
+  }
+
   return base;
 }
-
 function savePlayerData() {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -2420,6 +2456,8 @@ function resetAllActiveSkills() {
   rocketGraceTimer = 0;
   rocketDashShield.visible = false;
   magnetFieldRing.visible = false;
+  magnetFieldRing.rotation.set(0, 0, 0);
+  magnetFieldRing.scale.setScalar(1);
   updateActiveSkillsHUD();
 }
 
@@ -3527,39 +3565,54 @@ bindInstantButton('#right', () => move(1));
 bindInstantButton('#jump', doJump);
 bindInstantButton('#slide', doSlide);
 
-let touchX = 0, touchY = 0, swipeCommitted = false;
+let touchX = 0, touchY = 0, swipeCommitted = false, activeSwipeTouchId = null;
 const SWIPE_TRIGGER_PX = 16;
 
+function getTrackedTouch(touchList) {
+  for (let i = 0; i < touchList.length; i++) {
+    if (touchList[i].identifier === activeSwipeTouchId) return touchList[i];
+  }
+  return null;
+}
+
+function commitSwipe(dx, dy) {
+  if (swipeCommitted || Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_TRIGGER_PX) return;
+  swipeCommitted = true;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
+  else if (dy < 0) doJump();
+  else doSlide();
+}
+
 renderer.domElement.addEventListener('touchstart', e => {
-  if (!isGameplayInputAllowed()) return;
+  if (!isGameplayInputAllowed() || activeSwipeTouchId !== null || e.changedTouches.length === 0) return;
   const t = e.changedTouches[0];
+  activeSwipeTouchId = t.identifier;
   touchX = t.clientX;
   touchY = t.clientY;
   swipeCommitted = false;
 }, { passive: true });
 
 renderer.domElement.addEventListener('touchmove', e => {
-  if (swipeCommitted || !isGameplayInputAllowed()) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchX;
-  const dy = t.clientY - touchY;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_TRIGGER_PX) return;
-  swipeCommitted = true;
-  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
-  else if (dy < 0) doJump();
-  else doSlide();
+  if (swipeCommitted || !isGameplayInputAllowed() || activeSwipeTouchId === null) return;
+  const t = getTrackedTouch(e.touches);
+  if (!t) return;
+  commitSwipe(t.clientX - touchX, t.clientY - touchY);
 }, { passive: true });
 
 renderer.domElement.addEventListener('touchend', e => {
-  if (swipeCommitted || !isGameplayInputAllowed()) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchX;
-  const dy = t.clientY - touchY;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) < SWIPE_TRIGGER_PX) return;
-  swipeCommitted = true;
-  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
-  else if (dy < 0) doJump();
-  else doSlide();
+  if (activeSwipeTouchId === null) return;
+  const t = getTrackedTouch(e.changedTouches);
+  if (t && isGameplayInputAllowed()) {
+    commitSwipe(t.clientX - touchX, t.clientY - touchY);
+  }
+  if (t) activeSwipeTouchId = null;
+}, { passive: true });
+
+renderer.domElement.addEventListener('touchcancel', e => {
+  if (activeSwipeTouchId !== null && getTrackedTouch(e.changedTouches)) {
+    activeSwipeTouchId = null;
+    swipeCommitted = false;
+  }
 }, { passive: true });
 
 addEventListener('keydown', e => {
